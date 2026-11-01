@@ -1,9 +1,24 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <title>Chatlog Magician</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Roboto:wght@700&family=Open+Sans:wght@700&family=Montserrat:wght@700&family=Roboto+Mono:wght@700&family=Lato:wght@700&family=Poppins:wght@700&family=Inter:wght@400;500;600;700&family=Archivo+Black&family=Kaushan+Script&family=Newsreader:ital,wght@1,500&family=Oswald:wght@700&family=Nunito:wght@700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Roboto:wght@700&family=Open+Sans:wght@700&family=Montserrat:wght@700&family=Roboto+Mono:wght@700&family=Lato:wght@700&family=Poppins:wght@700&family=Inter:wght@400;500;600;700&family=Archivo+Black&family=Oswald:wght@700&family=Nunito:wght@700&display=swap">
+<meta name="description" content="Auto-color your GTA World US chat logs on black bars like the in-game chat, color parts of lines, hide names, add floating labels, and export a PNG.">
+<meta name="theme-color" content="#FDAF0F">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Chatlog Magician">
+<meta property="og:url" content="https://guantanaaa.github.io/chatlog-magician/">
+<meta property="og:title" content="Chatlog Magician">
+<meta property="og:description" content="Auto-color your GTA World US chat logs on black bars like the in-game chat, color parts of lines, hide names, add floating labels, and export a PNG.">
+<meta property="og:image" content="https://guantanaaa.github.io/chatlog-magician/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Chatlog Magician">
+<meta name="twitter:description" content="Auto-color your GTA World US chat logs on black bars like the in-game chat, color parts of lines, hide names, add floating labels, and export a PNG.">
+<meta name="twitter:image" content="https://guantanaaa.github.io/chatlog-magician/og-image.png">
+</head><body>
 <style>
 /* Two columns: raw log and settings on the left, preview and exports on the right. One column on phones. */
 :root {
@@ -32,14 +47,13 @@ body {
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Header */
-.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.top { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
 .top h1 { margin: 0; font: 400 clamp(30px, 5vw, 46px)/1.05 var(--f-display); letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; color: #fff; }
-.top h1 .script { display: inline-block; text-transform: none; font: 400 1.25em/1 var(--f-script); letter-spacing: 0; transform: rotate(-3deg) translateY(2px); margin-left: .04em;
+.top h1 .script { display: block; width: fit-content; font-size: .8em; text-transform: uppercase; transform: rotate(-3deg); margin: .12em auto 0;
   background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 55%, var(--accent-dark) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(2px 2px 0 #000); padding-right: .08em; }
-.top p { margin: 8px 0 0; color: var(--muted); max-width: 52ch; }
-.top .slogan { margin: 8px 0 0; max-width: 34em; color: var(--accent); font: italic 500 clamp(19px, 2.6vw, 24px)/1.25 var(--f-serif); text-wrap: balance; }
-.strip { display: flex; gap: 3px; padding-bottom: 6px; }
+.top p { margin: 8px auto 0; color: var(--muted); max-width: 60ch; }
+.strip { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; padding-bottom: 6px; max-width: 100%; }
 .strip i { display: block; width: 12px; height: 26px; border-radius: 2px; border: 1px solid rgba(128,128,128,.35); }
 
 /* Layout */
@@ -152,6 +166,11 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
 .stage.space .shotbox, .stage.space .shotbox * { cursor: grab !important; }
 .stage.panning .shotbox, .stage.panning .shotbox * { cursor: grabbing !important; }
 .stage.hasshot:focus-visible .shotbox { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fl-layer { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.flt { position: absolute; pointer-events: auto; cursor: move; touch-action: none; user-select: none; -webkit-user-select: none; paint-order: stroke fill; }
+.flt div { white-space: pre; }
+.flt.sel { outline: 1px dashed var(--accent); outline-offset: 3px; }
+#fltEdit textarea { width: 100%; min-height: 64px; resize: vertical; font: 13px/1.4 var(--f-mono); }
 .stage.drop { outline: 2px dashed var(--accent); outline-offset: -4px; }
 .mvh { position: absolute; z-index: 3; padding: 4px 8px; font-size: 11px; cursor: grab; touch-action: none; transform-origin: 0 0; white-space: nowrap; }
 .mvh:active { cursor: grabbing; }
@@ -175,8 +194,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   <header class="top">
     <div>
       <h1>Chatlog <span class="script">Magician</span></h1>
-      <p class="slogan">Since when do we pay for chatlog magicians in the RP community?</p>
-      <p>Paste your GTA World log. Every line takes its in-game color on a black bar, then export it as a PNG.</p>
+      <p>Paste your GTA World US chat log and every line takes its in-game color on black bars. Color parts of a line, hide names, drop the log on a screenshot, add floating labels, then export a PNG.</p>
     </div>
     <div class="strip" id="strip" aria-hidden="true"></div>
   </header>
@@ -248,7 +266,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
             <input type="color" id="o-bgc" aria-label="Background color" title="Background color" hidden>
           </div>
         </div>
-        <div class="stage" id="stage" tabindex="0"><div class="shotbox" id="shotbox"><div class="shotin" id="shotin"><canvas id="shotcv" hidden aria-label="Imported screenshot"></canvas><div class="chat" id="chat" data-bg="clear"></div><button class="btn mvh" id="moveH" type="button" hidden aria-label="Move the log: drag, or use the arrow keys">&#10021; Move</button></div></div></div>
+        <div class="stage" id="stage" tabindex="0"><div class="shotbox" id="shotbox"><div class="shotin" id="shotin"><canvas id="shotcv" hidden aria-label="Imported screenshot"></canvas><div class="chat" id="chat" data-bg="clear"></div><div class="fl-layer" id="flLayer"></div><button class="btn mvh" id="moveH" type="button" hidden aria-label="Move the log: drag, or use the arrow keys">&#10021; Move</button></div></div></div>
         <div class="selbar" id="selbar" hidden>
           <b>Selected line</b>
           <label class="sr" for="selType">Line type</label>
@@ -315,6 +333,25 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
           <button class="btn" id="btnRotR" type="button">Right</button>
           <button class="btn" id="btnFlip" type="button">Flip</button>
         </div>
+        <div class="ctl" id="fltBar" hidden>
+          <b class="small">Floating labels</b>
+          <button class="btn" id="btnFltItem" type="button">+ Item label</button>
+          <button class="btn" id="btnFltMe" type="button">+ /me overhead</button>
+          <button class="btn" id="btnFltName" type="button">+ Name tag</button>
+          <span class="small muted">Click a label on the preview to edit it, drag it to move it (arrows too, Delete removes it).</span>
+        </div>
+        <div class="ctl" id="fltEdit" hidden>
+          <textarea id="f-text" spellcheck="false" aria-label="Label text (one line per row)"></textarea>
+          <label class="inl">Color <input type="color" id="f-color"></label>
+          <label class="inl">Size <input type="number" id="f-size" min="6" max="80" step="0.5" aria-label="Label text size"></label>
+          <label class="inl">Wrap <input type="number" id="f-w" min="0" max="2000" step="10" placeholder="none" aria-label="Wrap width in pixels, 0 for none"></label>
+          <label class="inl">Outline <input type="number" id="f-ol" min="0" max="8" step="0.5" aria-label="Outline in pixels"></label>
+          <label class="inl">X <input type="number" id="f-x" step="1" aria-label="Label X"> Y <input type="number" id="f-y" step="1" aria-label="Label Y"></label>
+          <div class="seg" id="f-align" role="group" aria-label="Alignment"><button type="button" data-a="left">Left</button><button type="button" data-a="center">Center</button></div>
+          <label class="inl"><input type="checkbox" id="f-bold"> Bold</label>
+          <button class="btn" id="btnFltDup" type="button">Duplicate</button>
+          <button class="btn" id="btnFltDel" type="button">Delete</button>
+        </div>
         <div class="ctl">
           <label>Font
             <select id="o-font" aria-label="Font"></select>
@@ -340,17 +377,22 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     { id: 'low',     label: 'Low voice',         hint: 'Tobias Wren says [low]: …',  color: '#A6ACAF', mine: '#E3E7E9' },
     { id: 'lower',   label: 'Lower voice',       hint: 'Tobias Wren says [lower]: …', color: '#999999', mine: '#D5D5D5' },
     { id: 'whisper', label: 'Whisper',           hint: 'Tobias Wren whispers: …',    color: '#EDA841', mine: '#FFCB7A' },
+    { id: 'lowto',   label: 'Low voice to you',  hint: '[!] Tobias Wren says [low] (to You): …', color: '#A6ACAF' },
     { id: 'carw',    label: 'Whisper (Car)',     hint: 'Tobias Wren whispers (car): …', color: '#FFFF00', mine: '#FFFF99' },
-    { id: 'phone',   label: 'Phone call',        hint: 'Tobias Wren says (phone): …', color: '#FFFF00', mine: '#FFFF99' },
+    { id: 'phone',   label: 'Phone call',        hint: 'Tobias Wren says (phone): …', color: '#FFFF00', mine: '#FFFFFF' },
     { id: 'me',      label: '/me',               hint: '* Tobias Wren takes out a gun.', color: '#C2A2DA' },
     { id: 'do',      label: '/do',               hint: '* A gun is visible. (( Tobias Wren ))', color: '#C2A2DA' },
+    { id: 'pinfo',   label: 'Phone call info',   hint: '(iFruit 15) Incoming call from … / You have picked up the call.', color: '#FFFF00' },
     { id: 'sys',     label: 'Phone and system',  hint: '(iFruit 15) Incoming call from …', color: '#FFFFFF' },
-    { id: 'gps',     label: 'GPS, items, offers', hint: 'Waypoint set on the GPS by …', color: '#6FD35B' },
+    { id: 'gps',     label: 'GPS, items, offers', hint: 'Waypoint set on the GPS by …', color: '#32CD32' },
     { id: 'drug',    label: 'Drugs',             hint: 'You\'ve just taken Marijuana! …', color: '#FFFFFF' },
     { id: 'radio',   label: 'Radio',             hint: '**[CH: 911, S: 1] Tobias Wren: …', color: '#1E90FF' },
     { id: 'dept',    label: 'Department',        hint: '**[DEPARTMENT] Tobias Wren: …', color: '#FF5E8A' },
     { id: 'mega',    label: 'Megaphone',         hint: '[Megaphone] Tobias Wren: …', color: '#FF9F45' },
     { id: 'ooc',     label: 'OOC',               hint: '(( [OOC] … ))',           color: '#959595' },
+    { id: 'kill',    label: 'Character kill',    hint: '[Character kill] Tobias Wren has been killed.', color: '#FF0000' },
+    { id: 'weather', label: 'Weather forecast',  hint: 'Weather forecast: / Temperature: … / Wind: …', color: '#FFFFFF' },
+    { id: 'tag',     label: 'Tagged message',    hint: '[GPS] … / [Motel] … (tag colored, text white)', color: '#FFFFFF' },
     { id: 'info',    label: 'System info',       hint: '[INFO] or [SERVER] …',    color: '#1E90FF' },
     { id: 'warn',    label: 'Warning',           hint: '[WARNING] … or (!) …',    color: '#FFFF00' },
     { id: 'error',   label: 'Error / Admin',     hint: '[ERROR] … or [ADMIN] …',  color: '#FF0000' },
@@ -366,7 +408,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   var DIST = [1, 0.78, 0.58, 0.4];
   var DIST_LABEL = ['Close', 'Medium', 'Far', 'Very far'];
   var KEY = 'chatlog-magician-v3';
-  var PAL = 2; /* bump when the default colors change, so saved old colors are not kept */
+  var PAL = 4; /* bump when the default colors change, so saved old colors are not kept */
   var DEF_OPTS = { ts: true, codes: true, under: true, bold: false, bars: true, bg: 'clear', bgColor: '#000000', barColor: '#000000', size: 13.33, lh: 0, outline: -1, width: 784, font: 'arial', me: 'Tobias_Wren' };
   var PNG_SCALE = 1; /* 1:1, so the PNG is exactly as wide as the Width you set */
   var FONTS = [
@@ -506,6 +548,13 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   }
 
   function detect(t) {
+    if (/^(The \w+ is locked|You locked)\b/i.test(t)) return 'error';
+    if (/^You unlocked\b/i.test(t)) return 'success';
+    if (/^[\[(]\s*(PM|SMS|text message)\b/i.test(t)) return 'phone';
+    if (/^\[!\]\s.*\[\s*low(?:er)?\s*\]/i.test(t)) return 'lowto';
+    if (/^\[\s*character kill\s*\]/i.test(t)) return 'kill';
+    if (/^weather forecast\s*:/i.test(t) || /^temperature\s*:/i.test(t) || /^wind\s*:/i.test(t)) return 'weather';
+    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^Incoming call\b/i.test(t)) return 'pinfo';
     if (/^[\[(]\s*intercom\b/i.test(t)) return 'inter';
     if (/^[\[(]\s*(microphone|mic)\b/i.test(t)) return 'mic';
     if (/^\*\*\s*\[\s*(DEPARTMENT|DEPT)/i.test(t)) return 'dept';
@@ -513,10 +562,12 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     if (/^[\[(]\s*megaphone\b/i.test(t)) return 'mega';
     if (/^[\[(]\s*(phone|cellphone|cell|speaker)\b/i.test(t) || /\(\s*(phone|cellphone)\s*\)\s*:/i.test(t)) return 'phone';
     if (/^\(\(/.test(t) || /\[\s*(OOC|HRP)\s*\]/i.test(t)) return 'ooc';
-    if (/^\*{1,2}\s/.test(t) || /^>\s/.test(t)) return /\(\(.*\)\)\s*$/.test(t) ? 'do' : 'me';
+    if (/^\*{1,2}\s/.test(t) || /^>\s*\S/.test(t)) return /\(\(.*\)\)\s*$/.test(t) ? 'do' : 'me';
     if (/^You've just taken\b/i.test(t) || /^You.ve just taken\b/i.test(t)) return 'drug';
-    if (/^(Waypoint set\b|You received\b)/i.test(t)) return 'gps';
-    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^You have been recruited\b/i.test(t) ||
+    if (/^\|-+\s.*\s-+\|$/.test(t)) return 'gps';
+    if (/^\(Index:\s*\d+\)/i.test(t)) return 'sys';
+    if (/^(Waypoint set\b|You received\b|You paid\b|You gave\b)/i.test(t) || /\bhas shown you (their|his|her)\b/i.test(t)) return 'gps';
+    if (/^You have been recruited\b/i.test(t) ||
         /^Your rank has been\b/i.test(t) || /^You.ve received\b/i.test(t)) return 'sys';
     if (/^\[\s*(error|admin|staff|adm\w*)\s*\]/i.test(t) || /^AdmCmd\b/i.test(t)) return 'error';
     if (/^\[\s*(warning|alert|!)\s*\]/i.test(t) || /^\(!\)/.test(t)) return 'warn';
@@ -530,6 +581,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     if (/[\[(]\s*lower\s*[\])]/i.test(t)) return 'lower';
     if (/[\[(]\s*low\s*[\])]/i.test(t)) return 'low';
     if (/\bsays?\b[^:]{0,40}:/i.test(t)) return 'say';
+    if (/^\[\s*[A-Za-z][A-Za-z ]{1,24}\]\s*\S/.test(t)) return 'tag';
     return 'other';
   }
 
@@ -612,6 +664,67 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     return changed;
   }
 
+
+  /* Lines whose parts have different colors in the game: tag, text and values. */
+  function typeSegs(type, text, shown, dist) {
+    function sh(hex) { return shade(hex, DIST[dist]); }
+    var m;
+    if (type === 'success' && (m = text.match(/^(\[\s*success\s*\])(.*)$/i))) return [{ t: m[1], c: shown }, { t: m[2], c: sh('#FFFFFF') }];
+    if (type === 'kill' && (m = text.match(/^(\[[^\]]+\])(.*)$/))) return [{ t: m[1], c: sh(state.colors.info) }, { t: m[2], c: shown }];
+    if (type === 'lowto' && (m = text.match(/^(\[!\])(.*)$/))) return [{ t: m[1], c: sh('#F000B8') }, { t: m[2], c: shown }];
+    if (type === 'gps' && (m = text.match(/^(.*?\bhas shown you (?:their|his|her)\s+)(.+?)(\.?)$/i))) {
+      return [{ t: m[1], c: shown }, { t: m[2], c: sh('#FFFFFF') }].concat(m[3] ? [{ t: m[3], c: shown }] : []);
+    }
+    if (type === 'pinfo' && /^\(\s*iFruit/i.test(text)) {
+      var out = [], re = /^(\([^)]*\))|(\d{5,})/g, last = 0, x;
+      var white = sh('#FFFFFF');
+      while ((x = re.exec(text))) {
+        if (x.index > last) out.push({ t: text.slice(last, x.index), c: white });
+        out.push({ t: x[0], c: shown });
+        last = x.index + x[0].length;
+      }
+      if (last < text.length) out.push({ t: text.slice(last), c: white });
+      return out;
+    }
+    if (type === 'tag' && (m = text.match(/^(\[[^\]]+\])(.*)$/))) {
+      var tc = /^\[\s*(GPS|SUCCESS)\s*\]$/i.test(m[1]) ? state.colors.gps : '#FFA800';
+      var rest = m[2], hl = [], q;
+      if (/^\[\s*Motel\s*\]$/i.test(m[1])) {
+        var res = [/(Your room at )(.+?)( is yours)/i, /(for another )(\d+ day\(s\))/i, /(Open the )(.+?)( app)/i];
+        res.forEach(function (re) { if ((q = re.exec(rest))) hl.push([q.index + q[1].length, q.index + q[1].length + q[2].length]); });
+      }
+      hl.sort(function (a, b) { return a[0] - b[0]; });
+      var segs2 = [{ t: m[1], c: sh(tc) }], pos = 0, white = shown;
+      hl.forEach(function (h) {
+        if (h[0] > pos) segs2.push({ t: rest.slice(pos, h[0]), c: white });
+        segs2.push({ t: rest.slice(h[0], h[1]), c: sh('#FFFF00') });
+        pos = h[1];
+      });
+      if (pos < rest.length) segs2.push({ t: rest.slice(pos), c: white });
+      return segs2;
+    }
+    if (type === 'weather') {
+      if (/^weather forecast\s*:/i.test(text)) return [{ t: text, c: sh(state.colors.info) }];
+      var green = sh(state.colors.gps), white2 = shown;
+      var o2 = [], l2 = 0, y;
+      var cur = text.match(/(currently\s+)([A-Za-z][A-Za-z ]*?)(\.?)$/i);
+      var curStart = cur ? text.length - cur[0].length + cur[1].length : -1, curEnd = cur ? curStart + cur[2].length : -1;
+      var nre = /\(?-?\d+(?:\.\d+)?\s?(?:°\s?[CF]|[CF]|km\/h|mph|mm|%)\)?/g, spans = [];
+      while ((y = nre.exec(text))) spans.push([y.index, y.index + y[0].length]);
+      if (cur) spans.push([curStart, curEnd]);
+      spans.sort(function (a, b) { return a[0] - b[0]; });
+      spans.forEach(function (sp) {
+        if (sp[0] < l2) return;
+        if (sp[0] > l2) o2.push({ t: text.slice(l2, sp[0]), c: white2 });
+        o2.push({ t: text.slice(sp[0], sp[1]), c: green });
+        l2 = sp[1];
+      });
+      if (l2 < text.length) o2.push({ t: text.slice(l2), c: white2 });
+      return o2;
+    }
+    return null;
+  }
+
   function parse() {
     var out = [], seen = {}, upgraded = false;
     lineMaps = {};
@@ -643,6 +756,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
           { t: m[3], c: shown }
         ];
       }
+      segs = typeSegs(type, text, shown, dist) || segs;
       segs = applyMarks(text, segs, o.marks, dist, cm.map);
       out.push({ key: key, text: text, auto: auto, type: type, dist: dist, mine: mine, hex: lineHex, segs: segs, plain: segs.map(ex).join('') });
     });
@@ -753,8 +867,10 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       chat.style.left = shot.x + 'px'; chat.style.top = shot.y + 'px';
       mv.style.left = shot.x + 'px'; mv.style.top = (shot.y >= 28 / z ? shot.y - 28 / z : shot.y) + 'px';
       mv.style.transform = 'scale(' + (1 / z) + ')';
+      renderFloats();
       return;
     }
+    renderFloats();
     box.removeAttribute('style'); inn.removeAttribute('style'); chat.style.left = ''; chat.style.top = '';
     var f = Math.min(1, (st.clientWidth - 24) / state.opts.width);
     if (f < 0.999) chat.style.zoom = String(Math.max(0.3, f));
@@ -1289,6 +1405,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     var x = out.getContext('2d');
     paintFrame(x);
     x.drawImage(c, 0, 0, c.width, c.height, shot.x, shot.y, Number(c.dataset.w), Number(c.dataset.h));
+    drawFloats(x);
     if (shot.outW && shot.outW !== shot.cw) {
       var W = shot.outW, H = Math.max(1, Math.round(W * shot.ch / shot.cw));
       var r = document.createElement('canvas');
@@ -1304,6 +1421,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   function syncShotUi() {
     $('shotPos').hidden = !shot; $('btnShotRm').hidden = !shot;
     $('imgTools').hidden = !shot; $('imgTools2').hidden = !shot; $('imgTools3').hidden = !shot;
+    syncFloatUi();
     $('btnShot').textContent = shot ? 'Change screenshot' : 'Import screenshot';
     $('shotName').textContent = shot ? shot.name + ' (' + shot.base.width + ' x ' + shot.base.height + '). Drag the image to move it, Ctrl+scroll to zoom, Alt+drag moves the log. Click the preview, then arrows move the image, Alt+arrows the log, + / - zoom, 0 fit, 1 = 100%, F fill.' : 'Optional: place the log on a game screenshot. You can also drop or paste an image.';
     if (!shot) return;
@@ -1496,6 +1614,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       if (!shot || e.ctrlKey || e.metaKey) return;
       var t = e.target;
       if (t === $('moveH') || /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(t.tagName)) return;
+      if (floatKey(e)) { e.preventDefault(); return; }
       var d = e.shiftKey ? 10 : 1, k = e.key, c = { x: shot.cw / 2, y: shot.ch / 2 };
       if (k === ' ') { setSpace(true); e.preventDefault(); return; }
       var ar = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k];
@@ -1515,6 +1634,147 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     st.addEventListener('blur', function () { setSpace(false); });
   })();
 
+  /* ---------- Floating labels: text placed anywhere on the screenshot (item names, /me overhead, name tags) ---------- */
+  var floats = [], fsel = null, fidn = 0, mctx = document.createElement('canvas').getContext('2d');
+  var FLT_PRESETS = {
+    item: { text: 'Item name x1 (1g)', color: '#FFFF00', size: 12, bold: true, align: 'left', w: 0, outline: 2 },
+    me: { text: '* Tobias Wren does something.', color: '#C2A2DA', size: 13.33, bold: false, align: 'center', w: 230, outline: 2 },
+    name: { text: 'Tobias Wren', color: '#FFFFFF', size: 12, bold: true, align: 'center', w: 0, outline: 2 }
+  };
+  function fltFont(f) { return (f.bold ? 'bold ' : '') + f.size + 'px ' + fontCss(); }
+  function fltLH(f) { return Math.round(f.size * 1.3 * 100) / 100; }
+  /* One list of lines for both the preview and the PNG, so they break the same way. */
+  function fltLines(f) {
+    mctx.font = fltFont(f);
+    var out = [];
+    String(f.text).split(/\r?\n/).forEach(function (para) {
+      if (!f.w) { out.push(para); return; }
+      var words = para.split(/(\s+)/), cur = '';
+      words.forEach(function (w) {
+        if (!w) return;
+        var t = cur + w;
+        if (cur && mctx.measureText(t.replace(/\s+$/, '')).width > f.w) { out.push(cur.replace(/\s+$/, '')); cur = /^\s+$/.test(w) ? '' : w; }
+        else cur = t;
+      });
+      out.push(cur.replace(/\s+$/, ''));
+    });
+    return out;
+  }
+  function fltWidth(f, lines) {
+    if (f.w) return f.w;
+    mctx.font = fltFont(f);
+    var m = 0;
+    lines.forEach(function (l) { m = Math.max(m, mctx.measureText(l).width); });
+    return Math.ceil(m);
+  }
+  function renderFloats() {
+    var layer = $('flLayer');
+    if (!layer) return;
+    layer.textContent = '';
+    if (!shot) return;
+    floats.forEach(function (f) {
+      var lines = fltLines(f), bw = fltWidth(f, lines), lh = fltLH(f);
+      var d = document.createElement('div');
+      d.className = 'flt' + (f.id === fsel ? ' sel' : '');
+      d.dataset.id = String(f.id);
+      d.style.cssText = 'left:' + f.x + 'px;top:' + f.y + 'px;width:' + bw + 'px;color:' + f.color + ';font:' + fltFont(f) + ';line-height:' + lh + 'px;-webkit-text-stroke:' + (f.outline * 2) + 'px rgba(0,0,0,0.9);';
+      lines.forEach(function (l) {
+        var r = document.createElement('div');
+        r.style.cssText = 'height:' + lh + 'px;text-align:' + f.align + ';';
+        r.textContent = l;
+        d.appendChild(r);
+      });
+      layer.appendChild(d);
+    });
+  }
+  function drawFloats(x) {
+    floats.forEach(function (f) {
+      var lines = fltLines(f), bw = fltWidth(f, lines), lh = fltLH(f);
+      x.font = fltFont(f); x.textBaseline = 'middle'; x.textAlign = 'left'; x.lineJoin = 'round';
+      lines.forEach(function (l, i) {
+        var lw = x.measureText(l).width, lx = f.x + (f.align === 'center' ? (bw - lw) / 2 : 0), ly = f.y + i * lh + lh / 2 + 0.5;
+        if (f.outline > 0) { x.lineWidth = f.outline * 2; x.strokeStyle = 'rgba(0,0,0,0.9)'; x.strokeText(l, lx, ly); }
+        x.fillStyle = f.color; x.fillText(l, lx, ly);
+      });
+    });
+  }
+  function fltGet() { for (var i = 0; i < floats.length; i++) if (floats[i].id === fsel) return floats[i]; return null; }
+  function fltSelect(id) { fsel = id; syncFloatUi(); renderFloats(); }
+  function fltMove(f, nx, ny) {
+    f.x = clamp(Math.round(nx), -200, Math.max(0, shot.w - 5)); f.y = clamp(Math.round(ny), -200, Math.max(0, shot.h - 5));
+  }
+  function syncFloatUi() {
+    $('fltBar').hidden = !shot;
+    var f = shot ? fltGet() : null;
+    $('fltEdit').hidden = !f;
+    if (!f) return;
+    if ($('f-text') !== document.activeElement) $('f-text').value = f.text;
+    $('f-color').value = f.color.toLowerCase(); $('f-size').value = String(f.size); $('f-w').value = f.w ? String(f.w) : '';
+    $('f-ol').value = String(f.outline); $('f-x').value = String(f.x); $('f-y').value = String(f.y); $('f-bold').checked = !!f.bold;
+    [].forEach.call($('f-align').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.a === f.align)); b.classList.toggle('on', b.dataset.a === f.align); });
+  }
+  function fltAdd(kind, src) {
+    if (!shot) return;
+    var base = src || FLT_PRESETS[kind];
+    var f = {}; Object.keys(base).forEach(function (k) { f[k] = base[k]; });
+    f.id = ++fidn;
+    f.x = src ? src.x + 14 : Math.round(shot.w / 2 - 80); f.y = src ? src.y + 14 : Math.round(shot.h / 2 - 20);
+    floats.push(f); fsel = f.id; syncFloatUi(); renderFloats();
+  }
+  function floatKey(e) {
+    var f = fltGet();
+    if (!f || e.altKey) return false;
+    var d = e.shiftKey ? 10 : 1, k = e.key;
+    if (k === 'ArrowLeft') fltMove(f, f.x - d, f.y);
+    else if (k === 'ArrowRight') fltMove(f, f.x + d, f.y);
+    else if (k === 'ArrowUp') fltMove(f, f.x, f.y - d);
+    else if (k === 'ArrowDown') fltMove(f, f.x, f.y + d);
+    else if (k === 'Delete' || k === 'Backspace') { floats = floats.filter(function (g) { return g.id !== f.id; }); fsel = null; }
+    else if (k === 'Escape') fsel = null;
+    else return false;
+    syncFloatUi(); renderFloats();
+    return true;
+  }
+  (function bindFloats() {
+    $('btnFltItem').addEventListener('click', function () { fltAdd('item'); });
+    $('btnFltMe').addEventListener('click', function () { fltAdd('me'); });
+    $('btnFltName').addEventListener('click', function () { fltAdd('name'); });
+    $('btnFltDup').addEventListener('click', function () { var f = fltGet(); if (f) fltAdd(null, f); });
+    $('btnFltDel').addEventListener('click', function () { floats = floats.filter(function (g) { return g.id !== fsel; }); fsel = null; syncFloatUi(); renderFloats(); });
+    function edit(id, fn) { $(id).addEventListener('input', function (e) { var f = fltGet(); if (!f) return; fn(f, e.target); renderFloats(); syncFloatUi(); }); }
+    edit('f-text', function (f, t) { f.text = t.value; });
+    edit('f-color', function (f, t) { f.color = t.value.toUpperCase(); });
+    edit('f-size', function (f, t) { f.size = clamp(Number(t.value) || 12, 6, 80); });
+    edit('f-w', function (f, t) { f.w = clamp(Math.round(Number(t.value)) || 0, 0, 2000); });
+    edit('f-ol', function (f, t) { f.outline = clamp(Number(t.value) || 0, 0, 8); });
+    edit('f-x', function (f, t) { fltMove(f, Number(t.value) || 0, f.y); });
+    edit('f-y', function (f, t) { fltMove(f, f.x, Number(t.value) || 0); });
+    $('f-bold').addEventListener('change', function (e) { var f = fltGet(); if (f) { f.bold = e.target.checked; renderFloats(); } });
+    $('f-align').addEventListener('click', function (e) { var b = e.target.closest('button'), f = fltGet(); if (b && f) { f.align = b.dataset.a; syncFloatUi(); renderFloats(); } });
+    var box = $('shotbox'), drag = null;
+    /* Clicking anywhere but a label deselects it. */
+    box.addEventListener('pointerdown', function (e) { if (fsel !== null && !e.target.closest('.flt') && e.target !== $('moveH')) fltSelect(null); }, true);
+    box.addEventListener('pointerdown', function (e) {
+      var el = e.target.closest('.flt');
+      if (!el || e.button !== 0 || !shot) return;
+      var f = floats.filter(function (g) { return String(g.id) === el.dataset.id; })[0];
+      if (!f) return;
+      e.stopPropagation(); e.preventDefault();
+      try { $('stage').focus({ preventScroll: true }); } catch (x) { $('stage').focus(); }
+      if (fsel !== f.id) { fsel = f.id; syncFloatUi(); renderFloats(); el = box.querySelector('.flt[data-id="' + f.id + '"]') || el; }
+      drag = { f: f, px: e.clientX, py: e.clientY, x: f.x, y: f.y, el: el };
+      el.setPointerCapture(e.pointerId);
+      el.addEventListener('pointermove', onMove); el.addEventListener('pointerup', onEnd); el.addEventListener('pointercancel', onEnd);
+    });
+    function onMove(e) {
+      if (!drag) return;
+      fltMove(drag.f, drag.x + (e.clientX - drag.px) / shotZ, drag.y + (e.clientY - drag.py) / shotZ);
+      drag.el.style.left = drag.f.x + 'px'; drag.el.style.top = drag.f.y + 'px';
+      $('f-x').value = String(drag.f.x); $('f-y').value = String(drag.f.y);
+    }
+    function onEnd() { if (drag) { drag.el.removeEventListener('pointermove', onMove); drag.el.removeEventListener('pointerup', onEnd); drag.el.removeEventListener('pointercancel', onEnd); } drag = null; }
+  })();
+
   load();
   buildTypes();
   buildChips();
@@ -1524,7 +1784,6 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   ensureFont();
 })();
 </script>
-
 
 
 </body></html>
