@@ -112,6 +112,9 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
 .opts { display: grid; gap: 12px; }
 .opt { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
 .opt input { margin-top: 3px; flex: none; }
+.opt.wide { flex-direction: column; gap: 0; }
+.opt.wide > span { display: block; width: 100%; }
+.opt.wide input[type=text] { display: block; width: 100%; margin-top: 6px; }
 .opt small { display: block; color: var(--muted); font-size: 12px; }
 
 /* Line types */
@@ -163,7 +166,8 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
 .stage.hasshot .shotbox { overflow: hidden; }
 .stage.hasshot .shotin { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .stage.hasshot #shotcv { position: absolute; left: 0; top: 0; display: block; max-width: none; user-select: none; -webkit-user-drag: none; }
-.stage.hasshot .chat { position: absolute; }
+.stage.hasshot .chat { position: absolute; pointer-events: none; }
+.stage.hasshot .chat .bar { pointer-events: auto; }
 .stage.hasshot .chat[data-bg=clear] { background: none; }
 .stage.hasshot { outline: none; }
 .stage.hasshot #shotcv { cursor: grab; touch-action: none; }
@@ -244,6 +248,8 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
         <div class="pbody opts">
           <label class="opt"><input type="checkbox" id="o-ts"><span>Remove timestamps<small>Strips [14:02:11] or [2026-10-31 14:02:11] at the start of a line.</small></span></label>
           <label class="opt"><input type="checkbox" id="o-codes"><span>Remove color codes<small>Strips tags like {FF0000} copied from the chat.</small></span></label>
+          <label class="opt"><input type="checkbox" id="o-junk"><span>Hide useless lines<small>Removes prompts and tips that clutter a copied log: Price per kWh, Use /recharge, "Press Y to…", [INFO] tips with a command.</small></span></label>
+          <label class="opt wide"><span>Also hide lines containing<small>Words or phrases separated by commas. Not case sensitive.</small><input type="text" id="o-junkw" placeholder="e.g. Price per kWh, Press Y" autocomplete="off" spellcheck="false"></span></label>
           <label class="opt"><input type="checkbox" id="o-under"><span>Replace _ with a space<small>Tobias_Wren becomes Tobias Wren, as on screen.</small></span></label>
         </div>
       </section>
@@ -389,6 +395,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     { id: 'phone',   label: 'Phone call',        hint: 'Tobias Wren says (phone): …', color: '#FFFF00', mine: '#FFFFFF' },
     { id: 'me',      label: '/me',               hint: '* Tobias Wren takes out a gun.', color: '#C2A2DA' },
     { id: 'do',      label: '/do',               hint: '* A gun is visible. (( Tobias Wren ))', color: '#C2A2DA' },
+    { id: 'sms',     label: 'Phone messages',    hint: '(iFruit 15) Message sent to … / from …', color: '#FFA500' },
     { id: 'pinfo',   label: 'Phone call info',   hint: '(iFruit 15) Incoming call from … / You have picked up the call.', color: '#FFFF00' },
     { id: 'sys',     label: 'Phone and system',  hint: '(iFruit 15) Incoming call from …', color: '#FFFFFF' },
     { id: 'gps',     label: 'GPS, items, offers', hint: 'Waypoint set on the GPS by …', color: '#32CD32' },
@@ -407,6 +414,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     { id: 'money',   label: 'Advertisement and money', hint: '+$250 or [Advertisement] …', color: '#2ECC71' },
     { id: 'inter',   label: 'Intercom',          hint: '[Intercom] Tobias Wren: …', color: '#1E90FF' },
     { id: 'mic',     label: 'Microphone',        hint: '[Microphone] Tobias Wren: …', color: '#E7CE02' },
+    { id: 'junk',    label: 'Useless lines',     hint: 'Price per kWh · Use /recharge · Press Y to … (hidden)', color: '#808080' },
     { id: 'other',   label: 'Other',             hint: 'unrecognized line',       color: '#FFFFFF' }
   ];
   var TYPE_BY_ID = {};
@@ -416,7 +424,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   var DIST_LABEL = ['Close', 'Medium', 'Far', 'Very far'];
   var KEY = 'chatlog-magician-v3';
   var PAL = 4; /* bump when the default colors change, so saved old colors are not kept */
-  var DEF_OPTS = { ts: true, codes: true, under: true, bold: false, bars: true, bg: 'clear', bgColor: '#000000', barColor: '#000000', size: 13.33, lh: 0, outline: -1, width: 784, font: 'arial', me: 'Tobias_Wren' };
+  var DEF_OPTS = { ts: true, codes: true, under: true, bold: false, bars: true, bg: 'clear', bgColor: '#000000', barColor: '#000000', size: 13.33, lh: 0, outline: -1, width: 784, font: 'arial', me: 'Tobias_Wren', junk: true, junkWords: '' };
   var PNG_SCALE = 1; /* 1:1, so the PNG is exactly as wide as the Width you set */
   var FONTS = [
     { id: 'arial',      label: 'Arial (in-game)', css: 'Arial, Helvetica, "Liberation Sans", sans-serif', web: false },
@@ -490,7 +498,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   TYPES.forEach(function (t) {
     state.colors[t.id] = t.color;
     if (t.mine) state.mine[t.id] = t.mine;
-    state.show[t.id] = true;
+    state.show[t.id] = t.id !== 'junk';
   });
   Object.keys(DEF_OPTS).forEach(function (k) { state.opts[k] = DEF_OPTS[k]; });
 
@@ -563,13 +571,24 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     return { text: chars.join(''), map: idx };
   }
 
+  function isJunk(t) {
+    if (!state.opts.junk && !state.opts.junkWords) return false;
+    if (state.opts.junk && (/^Price per kWh\b/i.test(t) || /^Use \/recharge\b/i.test(t) || /\bPress\s+[A-Z]\s+to\b/.test(t) ||
+        /^\[\s*info\s*\].*\buse\s+[\/.]\w+/i.test(t))) return true;
+    var w = String(state.opts.junkWords || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean), lc = t.toLowerCase();
+    for (var i = 0; i < w.length; i++) if (lc.indexOf(w[i]) >= 0) return true;
+    return false;
+  }
+
   function detect(t) {
+    if (isJunk(t)) return 'junk';
     if (/^(The \w+ is locked|You locked)\b/i.test(t)) return 'error';
     if (/^You unlocked\b/i.test(t)) return 'success';
     if (/^[\[(]\s*(PM|SMS|text message)\b/i.test(t)) return 'phone';
     if (/^\[!\]\s.*\[\s*low(?:er)?\s*\]/i.test(t)) return 'lowto';
     if (/^\[\s*character kill\s*\]/i.test(t)) return 'kill';
     if (/^weather forecast\s*:/i.test(t) || /^temperature\s*:/i.test(t) || /^wind\s*:/i.test(t)) return 'weather';
+    if (/^\(\s*iFruit[^)]*\)\s*Message\s+(sent to|from)\b/i.test(t)) return 'sms';
     if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^Incoming call\b/i.test(t)) return 'pinfo';
     if (/^[\[(]\s*intercom\b/i.test(t)) return 'inter';
     if (/^[\[(]\s*(microphone|mic)\b/i.test(t)) return 'mic';
@@ -826,6 +845,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     $('o-ts').checked = state.opts.ts;
     $('o-codes').checked = state.opts.codes;
     $('o-under').checked = state.opts.under;
+    $('o-junk').checked = state.opts.junk; $('o-junkw').value = state.opts.junkWords;
     $('o-bars').checked = state.opts.bars;
     $('o-barc').value = state.opts.barColor.toLowerCase();
     $('o-barc').disabled = !state.opts.bars;
@@ -1307,9 +1327,10 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       syncControls(); save(); render();
     });
     $('btnUndo').addEventListener('click', function () { state.over = {}; state.sel = null; save(); render(); });
+    $('o-junkw').addEventListener('input', function (e) { state.opts.junkWords = e.target.value; save(); render(); });
     $('o-me').addEventListener('input', function (e) { state.opts.me = e.target.value; save(); render(); });
 
-    [['o-ts', 'ts'], ['o-codes', 'codes'], ['o-under', 'under'], ['o-bars', 'bars']].forEach(function (p) {
+    [['o-ts', 'ts'], ['o-codes', 'codes'], ['o-under', 'under'], ['o-bars', 'bars'], ['o-junk', 'junk']].forEach(function (p) {
       $(p[0]).addEventListener('change', function (e) { state.opts[p[1]] = e.target.checked; save(); render(); });
     });
     function numOpt(id, apply) {
@@ -1436,7 +1457,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       TYPES.forEach(function (t) {
         state.colors[t.id] = t.color;
         if (t.mine) state.mine[t.id] = t.mine;
-        state.show[t.id] = true;
+        state.show[t.id] = t.id !== 'junk';
       });
       state.over = {}; state.sel = null;
       syncControls(); save(); render(); ensureFont();
@@ -1549,9 +1570,9 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     probe.onerror = function () { URL.revokeObjectURL(url); say('st-png', 'Could not read that image.'); };
     probe.src = url;
   }
-  /* Bottom logs: until you move them they sit under the top logs' left edge, near the bottom of the frame. */
+  /* Bottom logs: until you move them they sit at the same left edge and the same distance from the bottom edge as the top logs are from the top edge. */
   function pos2(h) {
-    return { x: shot.x2 == null ? shot.x : shot.x2, y: shot.y2 == null ? Math.max(0, shot.h - h - 60) : shot.y2 };
+    return { x: shot.x2 == null ? shot.x : shot.x2, y: shot.y2 == null ? Math.max(0, shot.h - h - shot.y) : shot.y2 };
   }
   function syncPos2(p) {
     if (document.activeElement !== $('o-shx2')) $('o-shx2').value = String(Math.round(p.x));
