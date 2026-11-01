@@ -1,0 +1,1530 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Chatlog Magician</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Roboto:wght@700&family=Open+Sans:wght@700&family=Montserrat:wght@700&family=Roboto+Mono:wght@700&family=Lato:wght@700&family=Poppins:wght@700&family=Inter:wght@400;500;600;700&family=Archivo+Black&family=Kaushan+Script&family=Newsreader:ital,wght@1,500&family=Oswald:wght@700&family=Nunito:wght@700&display=swap">
+<style>
+/* Two columns: raw log and settings on the left, preview and exports on the right. One column on phones. */
+:root {
+  /* GTA World palette: night charcoal, white, and the gold-to-orange of the logo. Dark only. */
+  --bg: #131318; --surface: #1A1A20; --sunken: #0F0F13; --line: #2D2D37;
+  --fg: #F2F2F5; --muted: #A0A0AC;
+  --accent: #FDAF0F; --accent-2: #FDD90F; --accent-dark: #C98B0C; --accent-fg: #17130A; --accent-soft: rgba(253, 175, 15, .10);
+  --f-display: 'Archivo Black', 'Inter', system-ui, sans-serif;
+  --f-script: 'Kaushan Script', 'Brush Script MT', cursive;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --f-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 14px/1.5 var(--f-body);
+  padding-block: 24px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.shell { max-width: 1680px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.top h1 { margin: 0; font: 400 clamp(30px, 5vw, 46px)/1.05 var(--f-display); letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; color: #fff; }
+.top h1 .script { display: inline-block; text-transform: none; font: 400 1.25em/1 var(--f-script); letter-spacing: 0; transform: rotate(-3deg) translateY(2px); margin-left: .04em;
+  background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 55%, var(--accent-dark) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(2px 2px 0 #000); padding-right: .08em; }
+.top p { margin: 8px 0 0; color: var(--muted); max-width: 52ch; }
+.top .slogan { margin: 8px 0 0; max-width: 34em; color: var(--accent); font: italic 500 clamp(19px, 2.6vw, 24px)/1.25 var(--f-serif); text-wrap: balance; }
+.strip { display: flex; gap: 3px; padding-bottom: 6px; }
+.strip i { display: block; width: 12px; height: 26px; border-radius: 2px; border: 1px solid rgba(128,128,128,.35); }
+
+/* Layout */
+.layout { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@media (max-width: 900px) {
+  .layout { display: flex; flex-direction: column; }
+  .col { display: contents; }
+  .col.side > .tabs { order: 1; }
+  .sidepane { order: 2; }
+  #p-prev { order: 3; }
+}
+.sidepane { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.sidepane[hidden] { display: none; }
+.col.side > .tabs { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; }
+/* The preview is the main workspace: it gets the room. */
+#p-prev .stage { padding: 16px; min-height: min(72vh, 680px); }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; min-width: 0; max-width: 100%; overflow: hidden; }
+.phead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.phead h2 { margin: 0; font: 600 12px/1.2 var(--f-body); text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+.pbody { padding: 14px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+
+/* Controls */
+.btn { font: 600 13px/1 var(--f-body); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn[hidden] { display: none; }
+select, input[type=text], input[type=number] { font: 500 13px var(--f-body); background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
+input[type=text] { width: 100%; padding: 9px 10px; font-size: 14px; }
+input[type=number] { width: 5.5em; }
+input[type=checkbox], input[type=range] { accent-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 6px 10px; font: 500 12px var(--f-body); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed=true] { background: var(--accent); color: var(--accent-fg); }
+input[type=color] { inline-size: 30px; block-size: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer; }
+input[type=color]::-webkit-color-swatch-wrapper { padding: 2px; }
+input[type=color]::-webkit-color-swatch { border: 0; border-radius: 4px; }
+input[type=color]::-moz-color-swatch { border: 0; border-radius: 4px; }
+
+/* Input */
+textarea { width: 100%; display: block; border: 1px solid var(--line); border-radius: 6px; background: var(--sunken); color: var(--fg); font: 400 12.5px/1.55 var(--f-mono); padding: 10px 12px; resize: vertical; }
+#raw { min-height: 300px; }
+
+/* Options */
+.opts { display: grid; gap: 12px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+.opt input { margin-top: 3px; flex: none; }
+.opt small { display: block; color: var(--muted); font-size: 12px; }
+
+/* Line types */
+.trow { display: grid; grid-template-columns: 40px 40px minmax(0,1fr) 30px 22px; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.trow.thead { border-top: 0; padding: 0 0 6px; font: 600 10.5px/1 var(--f-body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.trow.thead span { text-align: center; }
+.trow input[type=color] { justify-self: center; }
+.tname { display: flex; flex-direction: column; min-width: 0; }
+.tl { font-weight: 500; font-size: 13px; }
+.tex { font: 400 11.5px var(--f-mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tcount { font: 500 12px var(--f-mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Preview */
+.stage { padding: 12px; background: var(--sunken); overflow-x: auto; }
+.chat { --fs: 15px; --lh: 18px; width: var(--w, 620px); flex: none; padding: 10px; min-height: 64px; font: 700 var(--fs)/var(--lh) var(--ff, Arial, Helvetica, 'Liberation Sans', sans-serif); }
+.chat[data-bg=clear] { background-color: #2c2c2c; background-image: conic-gradient(#3b3b3b 25%, #2c2c2c 0 50%, #3b3b3b 0 75%, #2c2c2c 0); background-size: 16px 16px; }
+.gap { height: var(--lh); }
+.rd-blur { filter: blur(4px); }
+.line { cursor: pointer; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bar { background: var(--bar, #000); box-shadow: 0 1px 0 0 var(--bar, #000), 0 -1px 0 0 var(--bar, #000); padding: 0.5px 3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.chat.nobar .bar { background: none; box-shadow: none; padding: 0; }
+.chat .bar { -webkit-text-stroke: calc(var(--ol, 0) * 2px) #000; paint-order: stroke fill; }
+.line:hover .bar { outline: 1px dashed rgba(255,255,255,.45); }
+.line.sel .bar { outline: 2px solid var(--accent); }
+.empty { color: #A3A8B6; font: 500 13px var(--f-body); }
+.selbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 14px; background: var(--accent-soft); border-top: 1px solid var(--line); }
+.selbar[hidden] { display: none; }
+.selbar b { font-weight: 600; font-size: 12.5px; }
+.inl { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.pickbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 14px; background: var(--accent-soft); border-top: 1px solid var(--line); }
+.pickbar[hidden] { display: none; }
+.pickbar b { font-weight: 600; font-size: 12.5px; }
+.pickTxt { flex: 1 1 100%; min-width: 0; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 5px 10px; font: 500 12px var(--f-body); cursor: pointer; }
+.chip:hover { border-color: var(--accent); }
+.chip i { display: block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(128,128,128,.55); }
+.hint { margin: 0; padding: 9px 14px; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); }
+.hint[hidden] { display: none; }
+.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 14px; border-top: 1px solid var(--line); }
+.ctl label { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+.ctl output { font: 500 12px var(--f-mono); color: var(--fg); min-width: 5ch; }
+.ctl .push { margin-left: auto; }
+
+/* Screenshot */
+.shotbox { position: relative; }
+.shotin { position: relative; }
+.stage.hasshot { padding: 12px; }
+.stage.hasshot .shotbox { overflow: hidden; }
+.stage.hasshot .shotin { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.stage.hasshot #shotcv { position: absolute; left: 0; top: 0; display: block; max-width: none; user-select: none; -webkit-user-drag: none; }
+.stage.hasshot .chat { position: absolute; }
+.stage.hasshot .chat[data-bg=clear] { background: none; }
+.stage.hasshot { outline: none; }
+.stage.hasshot #shotcv { cursor: grab; touch-action: none; }
+.stage.space .shotbox, .stage.space .shotbox * { cursor: grab !important; }
+.stage.panning .shotbox, .stage.panning .shotbox * { cursor: grabbing !important; }
+.stage.hasshot:focus-visible .shotbox { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stage.drop { outline: 2px dashed var(--accent); outline-offset: -4px; }
+.mvh { position: absolute; z-index: 3; padding: 4px 8px; font-size: 11px; cursor: grab; touch-action: none; transform-origin: 0 0; white-space: nowrap; }
+.mvh:active { cursor: grabbing; }
+
+.ctl[hidden] { display: none; }
+
+/* Exports */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 0 8px; }
+.tab { border: 0; background: none; color: var(--muted); font: 600 13px var(--f-body); padding: 11px 12px; cursor: pointer; }
+.tab[aria-selected=true] { color: var(--fg); box-shadow: inset 0 -2px 0 var(--accent); }
+.pane { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.pane[hidden] { display: none; }
+.pane textarea { min-height: 190px; }
+.status { font-size: 12.5px; color: var(--muted); min-height: 1.4em; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="shell">
+  <header class="top">
+    <div>
+      <h1>Chatlog <span class="script">Magician</span></h1>
+      <p class="slogan">Since when do we pay for chatlog magicians in the RP community?</p>
+      <p>Paste your GTA World log. Every line takes its in-game color on a black bar, then export it as a PNG.</p>
+    </div>
+    <div class="strip" id="strip" aria-hidden="true"></div>
+  </header>
+
+  <div class="layout">
+    <div class="col side">
+      <div class="tabs" role="tablist" aria-label="Log and settings">
+        <button class="tab" role="tab" id="tab-log" data-side="log" aria-selected="true" aria-controls="side-log" type="button">Log</button>
+        <button class="tab" role="tab" id="tab-set" data-side="set" aria-selected="false" aria-controls="side-set" type="button">Settings</button>
+      </div>
+      <div class="sidepane" id="side-log" role="tabpanel" aria-labelledby="tab-log">
+      <section class="panel" id="p-in">
+        <div class="phead">
+          <h2>Raw log</h2>
+          <div class="row">
+            <span class="small muted" id="sampleNote" hidden>Example loaded, replace it with your log</span>
+            <button class="btn" id="btnSample" type="button">Example</button>
+            <button class="btn" id="btnClear" type="button">Clear</button>
+          </div>
+        </div>
+        <div class="pbody">
+          <label class="sr" for="raw">Raw log</label>
+          <textarea id="raw" spellcheck="false" placeholder="Paste your chatlog here, one message per line."></textarea>
+        </div>
+      </section>
+      <section class="panel" id="p-me">
+        <div class="phead">
+          <h2>Your character</h2>
+          <span class="small muted" id="meCount" aria-live="polite"></span>
+        </div>
+        <div class="pbody">
+          <label class="sr" for="o-me">Your character name</label>
+          <input type="text" id="o-me" placeholder="Firstname_Lastname" autocomplete="off" spellcheck="false">
+          <p class="small muted" style="margin:8px 0 0">Everything your character says or says on the phone uses the brighter “You” colors, so both sides of a conversation are easy to tell apart. Underscores and spaces both work.</p>
+        </div>
+      </section>
+      </div>
+      <div class="sidepane" id="side-set" role="tabpanel" aria-labelledby="tab-set" hidden>
+      <section class="panel" id="p-opt">
+        <div class="phead"><h2>Cleanup</h2></div>
+        <div class="pbody opts">
+          <label class="opt"><input type="checkbox" id="o-ts"><span>Remove timestamps<small>Strips [14:02:11] or [2026-10-31 14:02:11] at the start of a line.</small></span></label>
+          <label class="opt"><input type="checkbox" id="o-codes"><span>Remove color codes<small>Strips tags like {FF0000} copied from the chat.</small></span></label>
+          <label class="opt"><input type="checkbox" id="o-under"><span>Replace _ with a space<small>Tobias_Wren becomes Tobias Wren, as on screen.</small></span></label>
+        </div>
+      </section>
+      <section class="panel" id="p-types">
+        <div class="phead">
+          <h2>Line types</h2>
+          <button class="btn" id="btnColors" type="button">Default colors</button>
+        </div>
+        <div class="pbody" id="types">
+          <div class="trow thead" aria-hidden="true"><span>Color</span><span>You</span><span></span><span></span><span></span></div>
+        </div>
+        <p class="hint">Each line's type is detected automatically. The “You” swatch is the color used for your own lines. Untick a type to leave it out of the result.</p>
+      </section>
+      </div>
+    </div>
+    <div class="col main">
+      <section class="panel" id="p-prev">
+        <div class="phead">
+          <h2>Preview</h2>
+          <div class="row">
+            <button class="btn" id="btnUndo" type="button" hidden>Undo edits</button>
+            <div class="seg" role="group" aria-label="Background">
+              <button type="button" data-bg="clear">Transparent</button>
+              <button type="button" data-bg="color">Solid color</button>
+            </div>
+            <input type="color" id="o-bgc" aria-label="Background color" title="Background color" hidden>
+          </div>
+        </div>
+        <div class="stage" id="stage" tabindex="0"><div class="shotbox" id="shotbox"><div class="shotin" id="shotin"><canvas id="shotcv" hidden aria-label="Imported screenshot"></canvas><div class="chat" id="chat" data-bg="clear"></div><button class="btn mvh" id="moveH" type="button" hidden aria-label="Move the log: drag, or use the arrow keys">&#10021; Move</button></div></div></div>
+        <div class="selbar" id="selbar" hidden>
+          <b>Selected line</b>
+          <label class="sr" for="selType">Line type</label>
+          <select id="selType"></select>
+          <div class="seg" id="selDist" role="group" aria-label="Distance"></div>
+          <label class="inl" for="selColor">Line color <input type="color" id="selColor" value="#ffffff"></label>
+          <button class="btn" id="selReset" type="button">Reset colors</button>
+          <button class="btn" id="selClose" type="button">Close</button>
+        </div>
+        <div class="pickbar" id="pickbar" hidden>
+          <b>Color selection</b>
+          <span class="pickTxt" id="pickTxt"></span>
+          <div class="chips" id="chips"></div>
+          <span class="small muted">Hide</span>
+          <div class="chips" id="hides"></div>
+          <span class="pickTxt" style="white-space:normal">Hidden words are blurred or blocked in the PNG.</span>
+          <label class="inl" for="pickColor">Custom <input type="color" id="pickColor" value="#ffffff"></label>
+          <button class="btn" id="pickClose" type="button">Done</button>
+        </div>
+        <p class="hint" id="hint">Click a line to change its type, color or distance. To color only part of a line (an action inside dialogue, speech inside a /me), select those words with the mouse or your finger.</p>
+        <div class="ctl">
+          <label class="opt" style="align-items:center"><input type="checkbox" id="o-bars" style="margin:0"><span>Bars behind text</span></label>
+          <label class="inl" for="o-barc">Bar color <input type="color" id="o-barc"></label>
+          <label class="inl">Size <input type="number" id="o-size" min="6" max="60" step="0.01" aria-label="Text size in pixels"> <span class="small muted">px</span></label>
+          <label class="inl">Line height <input type="number" id="o-lh" min="8" max="80" step="0.1" placeholder="auto" aria-label="Line height in pixels, empty for automatic"> <span class="small muted">px</span></label>
+          <label class="inl">Outline <input type="number" id="o-ol" min="0" max="8" step="0.1" placeholder="auto" aria-label="Text outline in pixels, empty for automatic"> <span class="small muted">px</span></label>
+          <label>Width
+            <input type="range" id="o-width" min="320" max="900" step="2">
+            <input type="number" id="o-widthn" min="200" max="2000" step="10" aria-label="Width in pixels"> <span class="small muted">px</span>
+          </label>
+        </div>
+        <div class="ctl">
+          <button class="btn" id="btnShot" type="button">Import screenshot</button>
+          <input type="file" id="shotFile" accept="image/*" hidden>
+          <span class="small muted" id="shotName">Optional: place the log on a game screenshot. You can also drop or paste an image.</span>
+          <label class="inl" id="shotPos" hidden>Log X <input type="number" id="o-shx" step="1" aria-label="Log X position"> Log Y <input type="number" id="o-shy" step="1" aria-label="Log Y position"></label>
+          <button class="btn" id="btnShotRm" type="button" hidden>Remove screenshot</button>
+        </div>
+        <div class="ctl" id="imgTools" hidden>
+          <b class="small">Crop</b>
+          <label class="inl">W <input type="number" id="o-cw" min="20" step="1" aria-label="Crop width"></label>
+          <label class="inl">H <input type="number" id="o-ch" min="20" step="1" aria-label="Crop height"></label>
+          <label class="inl">X <input type="range" id="r-cx" min="0" step="1" aria-label="Crop X"> <input type="number" id="o-cx" step="1" aria-label="Crop X value"></label>
+          <label class="inl">Y <input type="range" id="r-cy" min="0" step="1" aria-label="Crop Y"> <input type="number" id="o-cy" step="1" aria-label="Crop Y value"></label>
+          <button class="btn" id="btnC1000" type="button">1000 x 750</button>
+          <button class="btn" id="btnCfull" type="button">Full image</button>
+        </div>
+        <div class="ctl" id="imgTools3" hidden>
+          <b class="small">Background</b>
+          <label class="inl">Zoom <input type="range" id="r-z" min="10" max="400" step="1" aria-label="Background image zoom"> <input type="number" id="o-z" min="10" max="400" step="1" aria-label="Background zoom in percent"> %</label>
+          <button class="btn" id="btnZfill" type="button">Fill frame</button>
+          <button class="btn" id="btnZfit" type="button">Fit in frame</button>
+          <button class="btn" id="btnZ100" type="button">100%</button>
+        </div>
+        <div class="ctl" id="imgTools2" hidden>
+          <b class="small">Size</b>
+          <label class="inl">Output width <input type="number" id="o-outw" min="50" max="8000" step="1" aria-label="Output width in pixels"> px</label>
+          <span class="small muted" id="outInfo"></span>
+          <button class="btn" id="btnO100" type="button">100%</button>
+          <button class="btn" id="btnO75" type="button">75%</button>
+          <button class="btn" id="btnO50" type="button">50%</button>
+          <b class="small">Rotate</b>
+          <button class="btn" id="btnRotL" type="button">Left</button>
+          <button class="btn" id="btnRotR" type="button">Right</button>
+          <button class="btn" id="btnFlip" type="button">Flip</button>
+        </div>
+        <div class="ctl">
+          <label>Font
+            <select id="o-font" aria-label="Font"></select>
+          </label>
+          <button class="btn" id="btnReset" type="button">Reset settings</button>
+          <span class="status" id="st-png" role="status" aria-live="polite"></span>
+          <button class="btn push" id="btnCopy" type="button">Copy image</button>
+          <button class="btn primary" id="btnPng" type="button">Download PNG</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* color = everyone else, mine = your own lines (only for types that have it) */
+  var TYPES = [
+    { id: 'say',     label: 'Say',               hint: 'Tobias Wren says: …',        color: '#C9C9C9', mine: '#FFFFFF' },
+    { id: 'shout',   label: 'Shout',             hint: 'Tobias Wren shouts: …',      color: '#C9C9C9', mine: '#FFFFFF' },
+    { id: 'low',     label: 'Low voice',         hint: 'Tobias Wren says [low]: …',  color: '#A6ACAF', mine: '#E3E7E9' },
+    { id: 'lower',   label: 'Lower voice',       hint: 'Tobias Wren says [lower]: …', color: '#999999', mine: '#D5D5D5' },
+    { id: 'whisper', label: 'Whisper',           hint: 'Tobias Wren whispers: …',    color: '#EDA841', mine: '#FFCB7A' },
+    { id: 'carw',    label: 'Whisper (Car)',     hint: 'Tobias Wren whispers (car): …', color: '#FFFF00', mine: '#FFFF99' },
+    { id: 'phone',   label: 'Phone call',        hint: 'Tobias Wren says (phone): …', color: '#FFFF00', mine: '#FFFF99' },
+    { id: 'me',      label: '/me',               hint: '* Tobias Wren takes out a gun.', color: '#C2A2DA' },
+    { id: 'do',      label: '/do',               hint: '* A gun is visible. (( Tobias Wren ))', color: '#C2A2DA' },
+    { id: 'sys',     label: 'Phone and system',  hint: '(iFruit 15) Incoming call from …', color: '#FFFFFF' },
+    { id: 'gps',     label: 'GPS, items, offers', hint: 'Waypoint set on the GPS by …', color: '#6FD35B' },
+    { id: 'drug',    label: 'Drugs',             hint: 'You\'ve just taken Marijuana! …', color: '#FFFFFF' },
+    { id: 'radio',   label: 'Radio',             hint: '**[CH: 911, S: 1] Tobias Wren: …', color: '#1E90FF' },
+    { id: 'dept',    label: 'Department',        hint: '**[DEPARTMENT] Tobias Wren: …', color: '#FF5E8A' },
+    { id: 'mega',    label: 'Megaphone',         hint: '[Megaphone] Tobias Wren: …', color: '#FF9F45' },
+    { id: 'ooc',     label: 'OOC',               hint: '(( [OOC] … ))',           color: '#959595' },
+    { id: 'info',    label: 'System info',       hint: '[INFO] or [SERVER] …',    color: '#1E90FF' },
+    { id: 'warn',    label: 'Warning',           hint: '[WARNING] … or (!) …',    color: '#FFFF00' },
+    { id: 'error',   label: 'Error / Admin',     hint: '[ERROR] … or [ADMIN] …',  color: '#FF0000' },
+    { id: 'success', label: 'Success',           hint: '[SUCCESS] …',             color: '#32CD32' },
+    { id: 'money',   label: 'Advertisement and money', hint: '+$250 or [Advertisement] …', color: '#2ECC71' },
+    { id: 'inter',   label: 'Intercom',          hint: '[Intercom] Tobias Wren: …', color: '#1E90FF' },
+    { id: 'mic',     label: 'Microphone',        hint: '[Microphone] Tobias Wren: …', color: '#E7CE02' },
+    { id: 'other',   label: 'Other',             hint: 'unrecognized line',       color: '#FFFFFF' }
+  ];
+  var TYPE_BY_ID = {};
+  TYPES.forEach(function (t) { TYPE_BY_ID[t.id] = t; });
+
+  var DIST = [1, 0.78, 0.58, 0.4];
+  var DIST_LABEL = ['Close', 'Medium', 'Far', 'Very far'];
+  var KEY = 'chatlog-magician-v3';
+  var PAL = 2; /* bump when the default colors change, so saved old colors are not kept */
+  var DEF_OPTS = { ts: true, codes: true, under: true, bold: false, bars: true, bg: 'clear', bgColor: '#000000', barColor: '#000000', size: 13.33, lh: 0, outline: -1, width: 784, font: 'arial', me: 'Tobias_Wren' };
+  var PNG_SCALE = 1; /* 1:1, so the PNG is exactly as wide as the Width you set */
+  var FONTS = [
+    { id: 'arial',      label: 'Arial (in-game)', css: 'Arial, Helvetica, "Liberation Sans", sans-serif', web: false },
+    { id: 'verdana',    label: 'Verdana',         css: 'Verdana, Geneva, "DejaVu Sans", sans-serif', web: false },
+    { id: 'tahoma',     label: 'Tahoma',          css: 'Tahoma, Geneva, "DejaVu Sans", sans-serif', web: false },
+    { id: 'roboto',     label: 'Roboto',          css: 'Roboto, Arial, sans-serif', web: 'Roboto' },
+    { id: 'opensans',   label: 'Open Sans',       css: '"Open Sans", Arial, sans-serif', web: 'Open Sans' },
+    { id: 'montserrat', label: 'Montserrat',      css: 'Montserrat, Arial, sans-serif', web: 'Montserrat' },
+    { id: 'robotomono', label: 'Roboto Mono',     css: '"Roboto Mono", "Courier New", monospace', web: 'Roboto Mono' },
+    { id: 'trebuchet',  label: 'Trebuchet MS',    css: '"Trebuchet MS", "Lucida Grande", Arial, sans-serif', web: false },
+    { id: 'segoe',      label: 'Segoe UI',        css: '"Segoe UI", Roboto, Arial, sans-serif', web: false },
+    { id: 'calibri',    label: 'Calibri',         css: 'Calibri, Carlito, Arial, sans-serif', web: false },
+    { id: 'georgia',    label: 'Georgia',         css: 'Georgia, "Times New Roman", serif', web: false },
+    { id: 'times',      label: 'Times New Roman', css: '"Times New Roman", Times, "Liberation Serif", serif', web: false },
+    { id: 'courier',    label: 'Courier New',     css: '"Courier New", Courier, "Liberation Mono", monospace', web: false },
+    { id: 'lucida',     label: 'Lucida Console',  css: '"Lucida Console", Monaco, "DejaVu Sans Mono", monospace', web: false },
+    { id: 'comic',      label: 'Comic Sans MS',   css: '"Comic Sans MS", "Comic Neue", cursive, sans-serif', web: false },
+    { id: 'impact',     label: 'Impact',          css: 'Impact, "Arial Narrow", sans-serif', web: false },
+    { id: 'lato',       label: 'Lato',            css: 'Lato, Arial, sans-serif', web: 'Lato' },
+    { id: 'poppins',    label: 'Poppins',         css: 'Poppins, Arial, sans-serif', web: 'Poppins' },
+    { id: 'inter',      label: 'Inter',           css: 'Inter, Arial, sans-serif', web: 'Inter' },
+    { id: 'nunito',     label: 'Nunito',          css: 'Nunito, Arial, sans-serif', web: 'Nunito' },
+    { id: 'oswald',     label: 'Oswald',          css: 'Oswald, Impact, sans-serif', web: 'Oswald' }
+  ];
+  var FONT_BY_ID = {};
+  FONTS.forEach(function (f) { FONT_BY_ID[f.id] = f; });
+  function fontCss() { return (FONT_BY_ID[state.opts.font] || FONTS[0]).css; }
+  /* Web fonts must be loaded before the canvas can use them: load, then redraw. */
+  function ensureFont() {
+    var f = FONT_BY_ID[state.opts.font];
+    if (!f || !f.web || !document.fonts || !document.fonts.load) return;
+    document.fonts.load('700 ' + state.opts.size + 'px "' + f.web + '"').then(function () { render(); }, function () {});
+  }
+
+  var SAMPLE = [
+    '* Tobias_Wren walks up to the taco truck and leans on the counter, scanning the chalkboard menu.',
+    '* A sizzling sound comes from the grill behind the window. (( Tobias_Wren ))',
+    'Rosa_Delgado says: Evening! What can I get you?',
+    'Tobias_Wren says: Two carnitas tacos and a large horchata, please.',
+    'Rosa_Delgado says [low]: Careful, the salsa verde is really hot.',
+    'Lenny_Park whispers: Dude, get the fries too. Trust me.',
+    '* Tobias_Wren pulls a few bills from his pocket and slides them across the counter.',
+    '(iFruit 15) Incoming call from Mom.',
+    'You have picked up the call.',
+    'Mom_Wren says (phone): Don\'t forget Sunday dinner, sweetheart.',
+    'Tobias_Wren says (phone): I won\'t, Mom. I\'ll bring dessert.',
+    'You have hung up the call.',
+    'You received Carnitas Taco (2) from Rosa_Delgado.',
+    'You received Horchata (1) from Rosa_Delgado.',
+    '(( [OOC] I will RP eating while we chat, ok? ))'
+  ].join('\n');
+
+  var state = {
+    text: SAMPLE,
+    colors: {},
+    mine: {},
+    show: {},
+    opts: {},
+    over: {},
+    sel: null,
+    tab: 'bb'
+  };
+  TYPES.forEach(function (t) {
+    state.colors[t.id] = t.color;
+    if (t.mine) state.mine[t.id] = t.mine;
+    state.show[t.id] = true;
+  });
+  Object.keys(DEF_OPTS).forEach(function (k) { state.opts[k] = DEF_OPTS[k]; });
+
+  function $(id) { return document.getElementById(id); }
+  function isHex(v) { return /^#[0-9a-f]{6}$/i.test(String(v || '')); }
+
+  /* ---------- Local storage (viewer convenience only) ---------- */
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!s || typeof s !== 'object') return;
+      if (typeof s.text === 'string') state.text = s.text;
+      /* The previous built-in example is replaced by the new one. */
+      if (state.text.indexOf('John_Doe') >= 0 && state.text.indexOf('Mike_Rawson says: Routine stop') >= 0) state.text = SAMPLE;
+      if (state.text.indexOf('Jocelyn_Moruga steps out of the staff entrance') >= 0) state.text = SAMPLE;
+      var newPal = s.pal === PAL;
+      TYPES.forEach(function (t) {
+        if (newPal && s.colors && isHex(s.colors[t.id])) state.colors[t.id] = s.colors[t.id];
+        if (newPal && t.mine && s.mine && isHex(s.mine[t.id])) state.mine[t.id] = s.mine[t.id];
+        if (s.show && typeof s.show[t.id] === 'boolean') state.show[t.id] = s.show[t.id];
+      });
+      if (s.opts) Object.keys(DEF_OPTS).forEach(function (k) {
+        if (typeof s.opts[k] === typeof DEF_OPTS[k]) state.opts[k] = s.opts[k];
+      });
+      if (state.opts.bg === 'full') { state.opts.bg = 'clear'; state.opts.bars = false; }
+      if (['clear', 'color'].indexOf(state.opts.bg) < 0) state.opts.bg = 'color';
+      if (!isHex(state.opts.bgColor)) state.opts.bgColor = DEF_OPTS.bgColor;
+      if (!isHex(state.opts.barColor)) state.opts.barColor = DEF_OPTS.barColor;
+      if (!FONT_BY_ID[state.opts.font]) state.opts.font = DEF_OPTS.font;
+      if (state.opts.me === 'John_Doe' || state.opts.me === 'Jocelyn_Moruga') state.opts.me = DEF_OPTS.me;
+      if (s.over && typeof s.over === 'object') state.over = s.over;
+    } catch (e) { /* storage unavailable */ }
+  }
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        pal: PAL, text: state.text, colors: state.colors, mine: state.mine, show: state.show, opts: state.opts, over: state.over
+      }));
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  /* ---------- Cleanup and detection ---------- */
+  var TS_RE = /^\s*(?:\[[^\]]*\d{1,2}:\d{2}(?::\d{2})?[^\]]*\]|\d{1,2}:\d{2}:\d{2})\s*/;
+  var CODE_RE = /\{[0-9a-fA-F]{6}\}/g;
+  var LETTER_RE = /[A-Za-zÀ-ÖØ-öø-ÿ]/;
+
+  /* Cleans one line and remembers, for every kept character, where it sat in the original line.
+     Color and hide marks are stored with those original positions, so they stay on the right words
+     when the cleanup options change. */
+  function cleanMap(base) {
+    var chars = base.split(''), idx = chars.map(function (_, i) { return i; });
+    function drop(a, b) { chars.splice(a, b - a); idx.splice(a, b - a); }
+    if (state.opts.ts) {
+      var m = TS_RE.exec(chars.join(''));
+      if (m && m[0].length) drop(0, m[0].length);
+    }
+    if (state.opts.codes) {
+      var str = chars.join(''), re = /\{[0-9a-fA-F]{6}\}/g, mm, ranges = [];
+      while ((mm = re.exec(str))) ranges.push([mm.index, mm.index + mm[0].length]);
+      for (var k = ranges.length - 1; k >= 0; k--) drop(ranges[k][0], ranges[k][1]);
+    }
+    if (state.opts.under) {
+      for (var i = 1; i < chars.length - 1; i++) {
+        if (chars[i] === '_' && LETTER_RE.test(chars[i - 1]) && LETTER_RE.test(chars[i + 1])) chars[i] = ' ';
+      }
+    }
+    while (chars.length && /\s/.test(chars[0])) drop(0, 1);
+    while (chars.length && /\s/.test(chars[chars.length - 1])) drop(chars.length - 1, chars.length);
+    return { text: chars.join(''), map: idx };
+  }
+
+  function detect(t) {
+    if (/^[\[(]\s*intercom\b/i.test(t)) return 'inter';
+    if (/^[\[(]\s*(microphone|mic)\b/i.test(t)) return 'mic';
+    if (/^\*\*\s*\[\s*(DEPARTMENT|DEPT)/i.test(t)) return 'dept';
+    if (/^\*\*\s*\[/.test(t) || /^\[\s*(RADIO|CH)\b/i.test(t)) return 'radio';
+    if (/^[\[(]\s*megaphone\b/i.test(t)) return 'mega';
+    if (/^[\[(]\s*(phone|cellphone|cell|speaker)\b/i.test(t) || /\(\s*(phone|cellphone)\s*\)\s*:/i.test(t)) return 'phone';
+    if (/^\(\(/.test(t) || /\[\s*(OOC|HRP)\s*\]/i.test(t)) return 'ooc';
+    if (/^\*{1,2}\s/.test(t) || /^>\s/.test(t)) return /\(\(.*\)\)\s*$/.test(t) ? 'do' : 'me';
+    if (/^You've just taken\b/i.test(t) || /^You.ve just taken\b/i.test(t)) return 'drug';
+    if (/^(Waypoint set\b|You received\b)/i.test(t)) return 'gps';
+    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^You have been recruited\b/i.test(t) ||
+        /^Your rank has been\b/i.test(t) || /^You.ve received\b/i.test(t)) return 'sys';
+    if (/^\[\s*(error|admin|staff|adm\w*)\s*\]/i.test(t) || /^AdmCmd\b/i.test(t)) return 'error';
+    if (/^\[\s*(warning|alert|!)\s*\]/i.test(t) || /^\(!\)/.test(t)) return 'warn';
+    if (/^\[\s*(info|server|system)\s*\]/i.test(t)) return 'info';
+    if (/^\[\s*success\s*\]/i.test(t) || /^success\s*:/i.test(t)) return 'success';
+    if (/^\[\s*(ad|advertisement|business|\$)\s*\]/i.test(t) ||
+        /^[+-]\s?\$\s?\d/.test(t) || /^advertisement\s*:/i.test(t)) return 'money';
+    if (/\bshouts?\b\s*:/i.test(t) || /[\[(]\s*shout\s*[\])]/i.test(t)) return 'shout';
+    if (/\bwhispers?\b[^:]{0,20}[\[(]\s*(car|vehicle)\s*[\])]/i.test(t) || /[\[(]\s*(car|vehicle)\s*[\])]\s*whisper/i.test(t)) return 'carw';
+    if (/\bwhispers?\b\s*:/i.test(t) || /[\[(]\s*whisper\s*[\])]/i.test(t)) return 'whisper';
+    if (/[\[(]\s*lower\s*[\])]/i.test(t)) return 'lower';
+    if (/[\[(]\s*low\s*[\])]/i.test(t)) return 'low';
+    if (/\bsays?\b[^:]{0,40}:/i.test(t)) return 'say';
+    return 'other';
+  }
+
+  function normName(s) { return String(s).replace(/_/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase(); }
+
+  function speakerIsMe(text) {
+    var me = normName(state.opts.me);
+    if (!me) return false;
+    var s = normName(text).replace(/^\*+\s*/, '');
+    for (var i = 0; i < 2; i++) s = s.replace(/^(\[[^\]]*\]|\([^)]*\))\s*/, '');
+    if (s.indexOf(me) !== 0) return false;
+    var next = s.charAt(me.length);
+    return next === '' || !/[a-z0-9]/i.test(next);
+  }
+
+  function shade(hex, f) {
+    var n = parseInt(hex.slice(1), 16);
+    var r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f);
+    return '#' + [r, g, b].map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join('').toUpperCase();
+  }
+
+  /* A mark colors part of a line: c is 'auto', a type id ('me'), a type id with + for your own color ('say+'), or a hex. */
+  function markHex(c) {
+    if (!c || c === 'auto') return null;
+    if (/\+$/.test(c)) return state.mine[c.slice(0, -1)] || null;
+    if (TYPE_BY_ID[c]) return state.colors[c];
+    return isHex(c) ? c : null;
+  }
+
+  function applyMarks(text, segs, marks, dist, map) {
+    if (!marks || !marks.length) return segs;
+    var cols = [], i;
+    segs.forEach(function (sg) { for (var k = 0; k < sg.t.length; k++) cols.push(sg.c); });
+    var orig = cols.slice(), red = [];
+    marks.forEach(function (m) {
+      var redact = m.c === 'blur' || m.c === 'block' || m.c === 'show';
+      var hx = redact ? null : markHex(m.c);
+      var col = hx ? shade(hx, DIST[dist]) : null;
+      for (var j = 0; j < text.length; j++) {
+        var r = map[j];
+        if (r < m.s || r >= m.e) continue;
+        if (redact) red[j] = m.c === 'show' ? null : m.c;
+        else cols[j] = col || orig[j];
+      }
+    });
+    var out = [];
+    for (i = 0; i < text.length; i++) {
+      var last = out[out.length - 1];
+      var rr = red[i] || null;
+      if (last && last.c === cols[i] && (last.r || null) === rr) last.t += text.charAt(i);
+      else out.push(rr ? { t: text.charAt(i), c: cols[i], r: rr } : { t: text.charAt(i), c: cols[i] });
+    }
+    return out;
+  }
+
+  function ex(sg) { return sg.r ? sg.t.replace(/\S/g, '█') : sg.t; }
+
+  /* Blank lines are kept as gaps between messages, but not at the very start or end. */
+  function trimBlanks(list) {
+    var a = 0, b = list.length;
+    while (a < b && list[a].blank) a++;
+    while (b > a && list[b - 1].blank) b--;
+    return list.slice(a, b);
+  }
+
+  /* Positions of each kept character in the original line, per line key (used when you select words). */
+  var lineMaps = {};
+
+  /* Marks saved by an older version used positions in the cleaned text. Convert them once to original positions. */
+  function upgradeMarks(o, map) {
+    if (!o.marks) return false;
+    var changed = false;
+    o.marks = o.marks.map(function (m) {
+      if (m.v === 2) return m;
+      changed = true;
+      var s0 = Math.max(0, Math.min(map.length, m.s | 0)), e0 = Math.max(s0, Math.min(map.length, m.e | 0));
+      if (e0 <= s0) return null;
+      return { s: map[s0], e: map[e0 - 1] + 1, c: m.c, v: 2 };
+    }).filter(Boolean);
+    return changed;
+  }
+
+  function parse() {
+    var out = [], seen = {}, upgraded = false;
+    lineMaps = {};
+    state.text.split(/\r?\n/).forEach(function (raw) {
+      var base = raw.trim();
+      if (!base) { out.push({ blank: true, key: '', type: 'blank', text: '', plain: '', segs: [] }); return; }
+      /* Identical lines are told apart by their order, so each keeps its own colors and hidden words. */
+      var nth = seen[base] = (seen[base] || 0) + 1;
+      var key = nth === 1 ? base : base + '\t#' + nth;
+      var cm = cleanMap(base);
+      var text = cm.text;
+      if (!text) return;
+      lineMaps[key] = cm.map;
+      var auto = detect(text);
+      var o = state.over[key] || {};
+      if (state.over[key] && upgradeMarks(o, cm.map)) upgraded = true;
+      var type = (o.type && TYPE_BY_ID[o.type]) ? o.type : auto;
+      var dist = (typeof o.dist === 'number' && o.dist >= 0 && o.dist < DIST.length) ? o.dist : 0;
+      var def = TYPE_BY_ID[type];
+      var mine = !!def.mine && speakerIsMe(text);
+      var lineHex = isHex(o.color) ? o.color : (mine ? state.mine[type] : state.colors[type]);
+      var shown = shade(lineHex, DIST[dist]);
+      var segs = [{ t: text, c: shown }];
+      if (type === 'drug') {
+        var m = text.match(/^(You.ve just taken\s+)(.+?)(!.*)$/i);
+        if (m) segs = [
+          { t: m[1], c: shown },
+          { t: m[2], c: shade(state.colors.gps, DIST[dist]) },
+          { t: m[3], c: shown }
+        ];
+      }
+      segs = applyMarks(text, segs, o.marks, dist, cm.map);
+      out.push({ key: key, text: text, auto: auto, type: type, dist: dist, mine: mine, hex: lineHex, segs: segs, plain: segs.map(ex).join('') });
+    });
+    if (upgraded) save();
+    return trimBlanks(out);
+  }
+
+  /* ---------- Building the interface ---------- */
+  function buildTypes() {
+    var box = $('types');
+    TYPES.forEach(function (t) {
+      var row = document.createElement('div');
+      row.className = 'trow';
+      row.innerHTML =
+        '<input type="color" id="c-' + t.id + '" aria-label="Color: ' + t.label + '">' +
+        (t.mine ? '<input type="color" id="m-' + t.id + '" aria-label="Your color: ' + t.label + '">' : '<span></span>') +
+        '<label class="tname" for="s-' + t.id + '"><span class="tl">' + t.label + '</span><span class="tex">' + t.hint + '</span></label>' +
+        '<span class="tcount" id="n-' + t.id + '" title="Lines of this type">0</span>' +
+        '<input type="checkbox" id="s-' + t.id + '" aria-label="Show: ' + t.label + '">';
+      box.appendChild(row);
+      $('c-' + t.id).addEventListener('input', function (e) { state.colors[t.id] = e.target.value.toUpperCase(); save(); render(); });
+      if (t.mine) $('m-' + t.id).addEventListener('input', function (e) { state.mine[t.id] = e.target.value.toUpperCase(); save(); render(); });
+      $('s-' + t.id).addEventListener('change', function (e) { state.show[t.id] = e.target.checked; save(); render(); });
+    });
+
+    var sel = $('selType');
+    var auto = document.createElement('option');
+    auto.value = '';
+    sel.appendChild(auto);
+    TYPES.forEach(function (t) {
+      var o = document.createElement('option');
+      o.value = t.id; o.textContent = t.label;
+      sel.appendChild(o);
+    });
+
+    var seg = $('selDist');
+    DIST_LABEL.forEach(function (lab, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.dataset.d = String(i); b.textContent = lab;
+      seg.appendChild(b);
+    });
+  }
+
+  function syncControls() {
+    TYPES.forEach(function (t) {
+      $('c-' + t.id).value = state.colors[t.id].toLowerCase();
+      if (t.mine) $('m-' + t.id).value = state.mine[t.id].toLowerCase();
+      $('s-' + t.id).checked = !!state.show[t.id];
+    });
+    $('o-ts').checked = state.opts.ts;
+    $('o-codes').checked = state.opts.codes;
+    $('o-under').checked = state.opts.under;
+    $('o-bars').checked = state.opts.bars;
+    $('o-barc').value = state.opts.barColor.toLowerCase();
+    $('o-barc').disabled = !state.opts.bars;
+    $('o-bgc').hidden = state.opts.bg !== 'color';
+    $('o-bgc').value = state.opts.bgColor.toLowerCase();
+    $('o-size').value = String(state.opts.size);
+    $('o-lh').value = state.opts.lh > 0 ? String(state.opts.lh) : '';
+    $('o-ol').value = state.opts.outline >= 0 ? String(state.opts.outline) : '';
+    $('o-width').value = String(state.opts.width);
+    $('o-font').value = state.opts.font;
+    $('o-me').value = state.opts.me;
+    $('o-widthn').value = String(state.opts.width);
+    if ($('raw').value !== state.text) $('raw').value = state.text;
+    document.querySelectorAll('.seg button[data-bg]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.bg === state.opts.bg));
+    });
+  }
+
+  /* ---------- Rendering ---------- */
+  /* Measured on the game: 13.33px text on a 17.3px line pitch, so 1.3 times the size. */
+  function autoLineHeight() { return Math.round(state.opts.size * 1.3 * 100) / 100; }
+  function lineHeight() { return state.opts.lh > 0 ? state.opts.lh : autoLineHeight(); }
+  /* Outline (px, outside the letters). Automatic: none on bars, a thin black one without bars. */
+  function outlineSize() { return state.opts.outline >= 0 ? state.opts.outline : (state.opts.bars ? 0 : 1.5); }
+  function barsOn() { return state.opts.bars; }
+  /* Bars are fully opaque, so they never look see-through on a light background or a screenshot. */
+  function barFill() {
+    var n = parseInt(state.opts.barColor.slice(1), 16);
+    return 'rgb(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ')';
+  }
+
+  function renderStrip() {
+    var s = $('strip');
+    s.textContent = '';
+    TYPES.forEach(function (t) {
+      var i = document.createElement('i');
+      i.style.background = state.colors[t.id];
+      s.appendChild(i);
+    });
+  }
+
+  /* The preview always lays out at the real width (so line breaks match the PNG). If the column is narrower, it is shrunk to fit instead of being squeezed. */
+  var shot = null, shotZ = 1;
+  function fitPreview() {
+    var st = $('stage'), chat = $('chat'), box = $('shotbox'), inn = $('shotin'), mv = $('moveH');
+    if (!st) return;
+    chat.style.zoom = '';
+    st.classList.toggle('hasshot', !!shot);
+    $('shotcv').hidden = !shot;
+    mv.hidden = !shot;
+    if (shot) {
+      var z = Math.min(1, (st.clientWidth - 24) / shot.w);
+      shotZ = z;
+      box.style.width = Math.round(shot.w * z) + 'px'; box.style.height = Math.round(shot.h * z) + 'px';
+      inn.style.width = shot.w + 'px'; inn.style.height = shot.h + 'px'; inn.style.transform = 'scale(' + z + ')';
+      chat.style.left = shot.x + 'px'; chat.style.top = shot.y + 'px';
+      mv.style.left = shot.x + 'px'; mv.style.top = (shot.y >= 28 / z ? shot.y - 28 / z : shot.y) + 'px';
+      mv.style.transform = 'scale(' + (1 / z) + ')';
+      return;
+    }
+    box.removeAttribute('style'); inn.removeAttribute('style'); chat.style.left = ''; chat.style.top = '';
+    var f = Math.min(1, (st.clientWidth - 24) / state.opts.width);
+    if (f < 0.999) chat.style.zoom = String(Math.max(0.3, f));
+  }
+
+  function renderPreview(vis) {
+    var chat = $('chat');
+    chat.style.setProperty('--w', state.opts.width + 'px');
+    chat.style.setProperty('--fs', state.opts.size + 'px');
+    chat.style.setProperty('--ff', fontCss());
+    chat.style.setProperty('--lh', lineHeight() + 'px');
+    chat.style.setProperty('--ol', String(outlineSize()));
+    fitPreview();
+    chat.dataset.bg = state.opts.bg;
+    chat.classList.toggle('nobar', !barsOn());
+    chat.style.setProperty('--bar', barFill());
+    chat.style.backgroundColor = state.opts.bg === 'color' ? state.opts.bgColor : '';
+    chat.textContent = '';
+    if (!vis.length) {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = 'Paste a log to see the result here.';
+      chat.appendChild(e);
+      return;
+    }
+    var frag = document.createDocumentFragment();
+    vis.forEach(function (l) {
+      if (l.blank) {
+        var gap = document.createElement('div');
+        gap.className = 'gap';
+        frag.appendChild(gap);
+        return;
+      }
+      var d = document.createElement('div');
+      d.className = 'line' + (state.sel === l.key ? ' sel' : '');
+      d.dataset.key = l.key;
+      d.tabIndex = 0;
+      d.setAttribute('role', 'button');
+      d.setAttribute('aria-pressed', String(state.sel === l.key));
+      var bar = document.createElement('span');
+      bar.className = 'bar';
+      l.segs.forEach(function (sg) {
+        var sp = document.createElement('span');
+        sp.textContent = sg.t;
+        sp.style.color = sg.c;
+        if (sg.r === 'blur') sp.className = 'rd-blur';
+        if (sg.r === 'block') { sp.style.background = sg.c; sp.style.color = 'transparent'; sp.style.setProperty('-webkit-text-stroke', '0'); }
+        bar.appendChild(sp);
+      });
+      d.appendChild(bar);
+      frag.appendChild(d);
+    });
+    chat.appendChild(frag);
+  }
+
+  function renderSelbar(lines) {
+    var cur = null;
+    lines.forEach(function (l) { if (l.key === state.sel) cur = l; });
+    $('selbar').hidden = !cur;
+    $('hint').hidden = !!cur;
+    if (!cur) return;
+    $('selType').options[0].textContent = 'Auto: ' + TYPE_BY_ID[cur.auto].label;
+    var o = state.over[cur.key] || {};
+    $('selType').value = (o.type && TYPE_BY_ID[o.type]) ? o.type : '';
+    $('selColor').value = cur.hex.toLowerCase();
+    Array.prototype.forEach.call($('selDist').children, function (b) {
+      b.setAttribute('aria-pressed', String(Number(b.dataset.d) === cur.dist));
+    });
+  }
+
+
+  /* ---------- PNG ---------- */
+
+  /* Block: a solid bar. Blur: a coarse mosaic of the text, drawn from its own pixels so it works in every browser. */
+  function drawRedact(ctx, run, x, y, lh, size, scale, font) {
+    var txt = run.t.replace(/\s+$/, '');
+    var w = ctx.measureText(txt).width;
+    if (!txt || w <= 0) return;
+    if (run.r === 'block') { ctx.fillStyle = run.c; ctx.fillRect(x, y + 1, w, lh - 2); return; }
+    var tw = Math.max(1, Math.ceil(w * scale)), th = Math.max(1, Math.ceil(lh * scale));
+    var tmp = document.createElement('canvas');
+    tmp.width = tw; tmp.height = th;
+    var t2 = tmp.getContext('2d');
+    t2.scale(scale, scale);
+    t2.font = font;
+    t2.textBaseline = 'middle';
+    t2.fillStyle = run.c;
+    t2.fillText(txt, 0, lh / 2 + 0.5);
+    var data = t2.getImageData(0, 0, tw, th).data;
+    var cell = Math.max(3, Math.round(size * 0.4 * scale));
+    for (var cy = 0; cy < th; cy += cell) {
+      for (var cx = 0; cx < tw; cx += cell) {
+        var sum = 0, n = 0;
+        for (var yy = cy; yy < Math.min(th, cy + cell); yy++) {
+          for (var xx = cx; xx < Math.min(tw, cx + cell); xx++) { sum += data[(yy * tw + xx) * 4 + 3]; n++; }
+        }
+        var a = sum / (n * 255);
+        if (a > 0.03) {
+          ctx.globalAlpha = Math.min(1, a * 1.8);
+          ctx.fillStyle = run.c;
+          ctx.fillRect(x + cx / scale, y + cy / scale, Math.min(cell, tw - cx) / scale, Math.min(cell, th - cy) / scale);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawImage(vis) {
+    var size = state.opts.size, W = state.opts.width, pad = 10, lh = lineHeight(), px = 3;
+    var scale = PNG_SCALE;
+    var font = '700 ' + size + 'px ' + fontCss();
+    var c = document.createElement('canvas');
+    var ctx = c.getContext('2d');
+    ctx.font = font;
+    var maxW = W - 2 * pad - 2 * px;
+    var rows = [];
+
+    vis.forEach(function (l) {
+      var tokens = [];
+      l.segs.forEach(function (sg) {
+        (sg.t.match(/\S+\s*|\s+/g) || []).forEach(function (w) { tokens.push({ t: w, c: sg.c, r: sg.r }); });
+      });
+      var row = { runs: [] };
+      var rowW = 0;
+      function addRun(tk, text) {
+        var last = row.runs[row.runs.length - 1];
+        if (last && last.c === tk.c && last.r === tk.r) last.t += text; else row.runs.push({ t: text, c: tk.c, r: tk.r });
+        rowW += ctx.measureText(text).width;
+      }
+      tokens.forEach(function (tk) {
+        var trimmed = tk.t.replace(/\s+$/, '');
+        var wTrim = ctx.measureText(trimmed).width;
+        if (wTrim > maxW) {
+          /* A word wider than the whole line (a link, say): start a new row, then break it like the preview does. */
+          if (row.runs.length) { rows.push(row); row = { runs: [] }; rowW = 0; }
+          var piece = '';
+          Array.from(trimmed).forEach(function (ch) {
+            if (piece && ctx.measureText(piece + ch).width > maxW) {
+              addRun(tk, piece);
+              rows.push(row); row = { runs: [] }; rowW = 0;
+              piece = '';
+            }
+            piece += ch;
+          });
+          addRun(tk, piece + tk.t.slice(trimmed.length));
+          return;
+        }
+        if (row.runs.length && rowW + wTrim > maxW) {
+          rows.push(row);
+          row = { runs: [] };
+          rowW = 0;
+        }
+        addRun(tk, tk.t);
+      });
+      rows.push(row);
+    });
+
+    var H = Math.round(rows.length * lh) + 2 * pad;
+    /* Browsers refuse canvases past a certain size (lower on iPhone). Long logs are drawn at a smaller scale to fit. */
+    var fit = Math.min(PNG_SCALE, Math.sqrt(16000000 / (W * H)), 16000 / H);
+    scale = fit >= PNG_SCALE ? PNG_SCALE : (fit >= 1 ? 1 : Math.max(0.25, fit));
+    c.dataset.reduced = scale < PNG_SCALE ? '1' : '';
+    c.width = Math.max(1, Math.round(W * scale));
+    c.height = Math.max(1, Math.round(H * scale));
+    ctx.scale(scale, scale);
+    ctx.font = font;
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    if (state.opts.bg === 'color') {
+      ctx.fillStyle = state.opts.bgColor;
+      ctx.fillRect(0, 0, W, H);
+    }
+    rows.forEach(function (r, i) {
+      /* Rows land on whole pixels (17 then 18 px, like the game) so neighbouring bars meet with no seam. */
+      var y = pad + Math.round(i * lh), rh = Math.round((i + 1) * lh) - Math.round(i * lh);
+      if (!r.runs.length) return;
+      r.runs[r.runs.length - 1].t = r.runs[r.runs.length - 1].t.replace(/\s+$/, '');
+      var total = 0;
+      r.runs.forEach(function (run) { total += ctx.measureText(run.t).width; });
+      if (barsOn()) {
+        ctx.fillStyle = barFill();
+        /* Full row height: in the game the bars of consecutive lines touch, with no gap between them. */
+        ctx.fillRect(pad, y, total + 2 * px, rh);
+      }
+      var x = pad + px;
+      r.runs.forEach(function (run) {
+        if (run.r) {
+          drawRedact(ctx, run, x, y, rh, size, scale, font);
+          x += ctx.measureText(run.t).width;
+          return;
+        }
+        if (outlineSize() > 0) {
+          ctx.lineJoin = 'round';
+          ctx.lineWidth = outlineSize() * 2;
+          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+          ctx.strokeText(run.t, x, y + rh / 2 + 0.5);
+        }
+        ctx.fillStyle = run.c;
+        ctx.fillText(run.t, x, y + rh / 2 + 0.5);
+        x += ctx.measureText(run.t).width;
+      });
+    });
+    c.dataset.w = String(W);
+    c.dataset.h = String(H);
+    return c;
+  }
+
+  var currentVis = [];
+  function render() {
+    var lines = parse();
+    var counts = {};
+    TYPES.forEach(function (t) { counts[t.id] = 0; });
+    var mineCount = 0;
+    lines.forEach(function (l) { if (l.blank) return; counts[l.type]++; if (l.mine) mineCount++; });
+    TYPES.forEach(function (t) { $('n-' + t.id).textContent = counts[t.id]; });
+    currentVis = trimBlanks(lines.filter(function (l) { return l.blank || state.show[l.type]; }));
+    if (pick && !pick.every(function (p) { return lines.some(function (l) { return l.key === p.key; }); })) hidePick();
+    renderChips();
+    renderPreview(currentVis);
+    renderSelbar(lines);
+    renderStrip();
+    var n = Object.keys(state.over).length;
+    $('btnUndo').hidden = n === 0;
+    $('btnUndo').textContent = 'Undo edits (' + n + ')';
+    $('sampleNote').hidden = state.text !== SAMPLE;
+    $('meCount').textContent = normName(state.opts.me)
+      ? (mineCount + (mineCount === 1 ? ' line' : ' lines') + ' found')
+      : 'No name set';
+  }
+
+  /* ---------- Copy and download ---------- */
+  var timers = {};
+  function say(id, msg) {
+    var el = $(id);
+    el.textContent = msg;
+    clearTimeout(timers[id]);
+    timers[id] = setTimeout(function () { el.textContent = ''; }, 3200);
+  }
+
+  var downloads = null;
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      window.claude.use('downloads').then(function (d) { downloads = d || null; }, function () { downloads = null; });
+    }
+  } catch (e) { downloads = null; }
+
+  function copyPng(statusId) {
+    if (!currentVis.length) { say(statusId, 'Nothing to copy.'); return; }
+    var canvas = withShot(drawImage(currentVis));
+    var blobP = new Promise(function (res, rej) { canvas.toBlob(function (b) { b ? res(b) : rej(new Error('blob')); }, 'image/png'); });
+    var p;
+    try { p = navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]); } catch (e) { p = Promise.reject(e); }
+    p.then(function () { say(statusId, 'Image copied.' + (canvas.dataset.reduced ? ' (Very long log: reduced size. Split it in two for a sharper image.)' : '')); }, function () {
+      say(statusId, 'Copy is blocked here. Use Download PNG instead.');
+    });
+  }
+
+  function downloadPng(statusId) {
+    if (!currentVis.length) { say(statusId, 'Nothing to download.'); return; }
+    var canvas = withShot(drawImage(currentVis));
+    var getDl = downloads ? Promise.resolve(downloads) : (window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null));
+    getDl.then(function (d) {
+      if (!d) {
+        /* Outside claude.ai: a normal browser download. */
+        canvas.toBlob(function (blob) {
+          if (!blob) { say(statusId, 'Could not build the PNG.'); return; }
+          var url = URL.createObjectURL(blob), a = document.createElement('a');
+          a.href = url; a.download = 'chatlog.png';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          say(statusId, 'PNG downloaded.' + (canvas.dataset.reduced ? ' (Very long log: reduced size. Split it in two for a sharper image.)' : ''));
+        }, 'image/png');
+        return;
+      }
+      downloads = d;
+      canvas.toBlob(function (blob) {
+        if (!blob) { say(statusId, 'Could not build the PNG.'); return; }
+        d.save({ filename: 'chatlog.png', data: blob }).then(function () {
+          say(statusId, 'PNG saved.' + (canvas.dataset.reduced ? ' (Very long log: reduced size. Split it in two for a sharper image.)' : ''));
+        }, function (err) {
+          if (err && err.code === 'declined') { say(statusId, 'Download cancelled.'); return; }
+          say(statusId, 'Download failed' + (err && err.code ? ' (' + err.code + ')' : '') + '.');
+        });
+      }, 'image/png');
+    }, function () { say(statusId, 'Download is not available in this view.'); });
+  }
+
+  /* ---------- Coloring part of a line ---------- */
+  var CHIPS = [
+    ['auto', 'Auto'], ['say+', 'You say'], ['say', 'Others say'], ['low+', 'You low'], ['low', 'Others low'],
+    ['me', '/me'], ['phone', 'Phone'], ['gps', 'GPS, items'], ['ooc', 'OOC']
+  ];
+  var HIDES = [['blur', 'Blur'], ['block', 'Block'], ['show', 'Show again']];
+  var pick = null;
+
+  function isRedact(c) { return c === 'blur' || c === 'block' || c === 'show'; }
+
+  function patchOver(key, patch) {
+    var o = Object.assign({}, state.over[key] || {}, patch);
+    if (!o.type) delete o.type;
+    if (!o.dist) delete o.dist;
+    if (!isHex(o.color)) delete o.color;
+    if (!o.marks || !o.marks.length) delete o.marks;
+    if (Object.keys(o).length) state.over[key] = o; else delete state.over[key];
+  }
+
+  function buildChips() {
+    var box = $('chips');
+    CHIPS.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.dataset.c = c[0];
+      b.innerHTML = '<i></i><span></span>';
+      b.lastChild.textContent = c[1];
+      box.appendChild(b);
+    });
+    var hides = $('hides');
+    HIDES.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.dataset.c = c[0];
+      b.textContent = c[1];
+      hides.appendChild(b);
+    });
+  }
+
+  function renderChips() {
+    document.querySelectorAll('#chips .chip').forEach(function (b) {
+      var hx = markHex(b.dataset.c);
+      b.firstChild.style.background = hx || 'transparent';
+    });
+  }
+
+  function hidePick() { pick = null; $('pickbar').hidden = true; }
+
+  function lineOffset(bar, node, off) {
+    var r = document.createRange();
+    r.selectNodeContents(bar);
+    try { r.setEnd(node, off); } catch (e) { return 0; }
+    return r.toString().length;
+  }
+
+  function readSelection() {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
+    var range = sel.getRangeAt(0);
+    var chat = $('chat');
+    if (!chat.contains(range.commonAncestorContainer)) return null;
+    var res = [];
+    chat.querySelectorAll('.line').forEach(function (ln) {
+      if (!range.intersectsNode(ln)) return;
+      var bar = ln.firstChild;
+      if (!bar) return;
+      var s = 0, e = bar.textContent.length;
+      if (bar.contains(range.startContainer)) s = lineOffset(bar, range.startContainer, range.startOffset);
+      if (bar.contains(range.endContainer)) e = lineOffset(bar, range.endContainer, range.endOffset);
+      if (e > s) res.push({ key: ln.dataset.key, s: s, e: e });
+    });
+    return res.length ? { parts: res, text: sel.toString() } : null;
+  }
+
+  function applyPick(c) {
+    if (!pick) return;
+    pick.forEach(function (p) {
+      var map = lineMaps[p.key];
+      if (!map || p.e <= p.s || p.s >= map.length) return;
+      var rs = map[p.s], re = map[Math.min(p.e, map.length) - 1] + 1;
+      var cur = (state.over[p.key] || {}).marks || [];
+      var kind = isRedact(c);
+      var kept = cur.filter(function (m) { return isRedact(m.c) !== kind || !(m.s >= rs && m.e <= re); });
+      kept.push({ s: rs, e: re, c: c, v: 2 });
+      patchOver(p.key, { marks: kept });
+    });
+    save();
+    render();
+  }
+
+  /* ---------- Events ---------- */
+  function bind() {
+    $('raw').addEventListener('input', function (e) { state.text = e.target.value; state.sel = null; save(); render(); });
+    $('btnSample').addEventListener('click', function () { state.text = SAMPLE; state.opts.me = DEF_OPTS.me; state.sel = null; syncControls(); save(); render(); });
+    $('btnClear').addEventListener('click', function () { state.text = ''; state.sel = null; state.over = {}; syncControls(); save(); render(); $('raw').focus(); });
+    $('btnColors').addEventListener('click', function () {
+      TYPES.forEach(function (t) { state.colors[t.id] = t.color; if (t.mine) state.mine[t.id] = t.mine; });
+      syncControls(); save(); render();
+    });
+    $('btnUndo').addEventListener('click', function () { state.over = {}; state.sel = null; save(); render(); });
+    $('o-me').addEventListener('input', function (e) { state.opts.me = e.target.value; save(); render(); });
+
+    [['o-ts', 'ts'], ['o-codes', 'codes'], ['o-under', 'under'], ['o-bars', 'bars']].forEach(function (p) {
+      $(p[0]).addEventListener('change', function (e) { state.opts[p[1]] = e.target.checked; save(); render(); });
+    });
+    function numOpt(id, apply) {
+      var el = $(id);
+      el.addEventListener('input', function () { if (el.value !== '' && el.checkValidity()) { apply(Number(el.value)); save(); render(); } else if (el.value === '' && el.placeholder === 'auto') { apply(null); save(); render(); } });
+      el.addEventListener('change', function () { syncControls(); });
+    }
+    numOpt('o-size', function (v) { if (v) { state.opts.size = Math.round(v * 100) / 100; ensureFont(); } });
+    numOpt('o-lh', function (v) { state.opts.lh = v ? v : 0; });
+    numOpt('o-ol', function (v) { state.opts.outline = v === null ? -1 : v; });
+    FONTS.forEach(function (f) { var o = document.createElement('option'); o.value = f.id; o.textContent = f.label; $('o-font').appendChild(o); });
+    $('o-font').value = state.opts.font;
+    $('o-font').addEventListener('change', function (e) { state.opts.font = e.target.value; save(); render(); ensureFont(); });
+    $('o-width').addEventListener('input', function (e) {
+      state.opts.width = Number(e.target.value);
+      $('o-widthn').value = String(state.opts.width);
+      save(); render();
+    });
+    /* Type an exact width in pixels (the slider only covers 320 to 900). The PNG is exactly this wide; its height follows the log. */
+    $('o-widthn').addEventListener('change', function (e) {
+      var v = Math.round(Number(e.target.value));
+      if (!isFinite(v)) v = state.opts.width;
+      state.opts.width = Math.max(200, Math.min(2000, v));
+      e.target.value = String(state.opts.width);
+      $('o-width').value = String(state.opts.width);
+      save(); render();
+    });
+    document.querySelectorAll('.seg button[data-bg]').forEach(function (b) {
+      b.addEventListener('click', function () { state.opts.bg = b.dataset.bg; syncControls(); save(); render(); });
+    });
+    $('o-barc').addEventListener('input', function (e) { state.opts.barColor = e.target.value.toLowerCase(); save(); render(); });
+    $('o-bgc').addEventListener('input', function (e) { state.opts.bgColor = e.target.value.toLowerCase(); save(); render(); });
+
+    if (window.ResizeObserver) new ResizeObserver(function () { fitPreview(); }).observe(document.querySelector('.stage'));
+    window.addEventListener('resize', fitPreview);
+    var chat = $('chat');
+    function toggle(d) {
+      var k = d.dataset.key;
+      state.sel = state.sel === k ? null : k;
+      render();
+      var s = chat.querySelector('.line.sel');
+      if (s) s.focus();
+    }
+    chat.addEventListener('click', function (e) {
+      var s = window.getSelection();
+      if (s && !s.isCollapsed && s.toString().trim()) return;
+      hidePick();
+      var d = e.target.closest('.line');
+      if (d) toggle(d);
+    });
+
+    document.addEventListener('selectionchange', function () {
+      var r = readSelection();
+      if (!r) return;
+      pick = r.parts;
+      var t = r.text.replace(/\s+/g, ' ').trim();
+      $('pickTxt').textContent = '“' + (t.length > 90 ? t.slice(0, 90) + '…' : t) + '”';
+      $('pickbar').hidden = false;
+    });
+    $('chips').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    $('chips').addEventListener('click', function (e) {
+      var b = e.target.closest('.chip');
+      if (b) applyPick(b.dataset.c);
+    });
+    $('hides').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    $('hides').addEventListener('click', function (e) {
+      var b = e.target.closest('.chip');
+      if (b) applyPick(b.dataset.c);
+    });
+    $('pickColor').addEventListener('input', function (e) { applyPick(e.target.value.toLowerCase()); });
+    $('pickClose').addEventListener('click', hidePick);
+    $('selColor').addEventListener('input', function (e) {
+      if (!state.sel) return;
+      patchOver(state.sel, { color: e.target.value.toLowerCase() });
+      save(); render();
+    });
+    $('selReset').addEventListener('click', function () {
+      if (!state.sel) return;
+      patchOver(state.sel, { color: null, marks: null });
+      save(); render();
+    });
+    chat.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var d = e.target.closest('.line');
+      if (d) { e.preventDefault(); toggle(d); }
+    });
+
+    function setOver(patch) {
+      if (!state.sel) return;
+      patchOver(state.sel, patch);
+      save(); render();
+    }
+    $('selType').addEventListener('change', function (e) { setOver({ type: e.target.value }); });
+    $('selDist').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-d]');
+      if (b) setOver({ dist: Number(b.dataset.d) });
+    });
+    $('selClose').addEventListener('click', function () { state.sel = null; render(); });
+
+    document.querySelectorAll('.tab[data-side]').forEach(function (t) {
+      t.addEventListener('click', function () {
+        document.querySelectorAll('.tab[data-side]').forEach(function (x) {
+          var on = x === t;
+          x.setAttribute('aria-selected', String(on));
+          $('side-' + x.dataset.side).hidden = !on;
+        });
+      });
+    });
+
+    $('btnPng').addEventListener('click', function () { downloadPng('st-png'); });
+    $('btnCopy').addEventListener('click', function () { copyPng('st-png'); });
+    var resetTimer = null;
+    $('btnReset').addEventListener('click', function () {
+      var b = $('btnReset');
+      if (!resetTimer) {
+        b.textContent = 'Click again to confirm';
+        resetTimer = setTimeout(function () { resetTimer = null; b.textContent = 'Reset settings'; }, 3500);
+        return;
+      }
+      clearTimeout(resetTimer); resetTimer = null; b.textContent = 'Reset settings';
+      Object.keys(DEF_OPTS).forEach(function (k) { state.opts[k] = DEF_OPTS[k]; });
+      TYPES.forEach(function (t) {
+        state.colors[t.id] = t.color;
+        if (t.mine) state.mine[t.id] = t.mine;
+        state.show[t.id] = true;
+      });
+      state.over = {}; state.sel = null;
+      syncControls(); save(); render(); ensureFont();
+      say('st-png', 'Settings reset. Your log is kept.');
+    });
+  }
+
+  /* ---------- Screenshot: place the log on top of an imported image ---------- */
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  /* Export: the cropped part of the image at its own pixels, the log on top, then the optional resize. */
+  function withShot(c) {
+    if (!shot) return c;
+    var out = document.createElement('canvas');
+    out.width = shot.cw; out.height = shot.ch;
+    var x = out.getContext('2d');
+    paintFrame(x);
+    x.drawImage(c, 0, 0, c.width, c.height, shot.x, shot.y, Number(c.dataset.w), Number(c.dataset.h));
+    if (shot.outW && shot.outW !== shot.cw) {
+      var W = shot.outW, H = Math.max(1, Math.round(W * shot.ch / shot.cw));
+      var r = document.createElement('canvas');
+      r.width = W; r.height = H;
+      var rx = r.getContext('2d');
+      rx.imageSmoothingEnabled = true; rx.imageSmoothingQuality = 'high';
+      rx.drawImage(out, 0, 0, W, H);
+      out = r;
+    }
+    if (c.dataset.reduced) out.dataset.reduced = c.dataset.reduced;
+    return out;
+  }
+  function syncShotUi() {
+    $('shotPos').hidden = !shot; $('btnShotRm').hidden = !shot;
+    $('imgTools').hidden = !shot; $('imgTools2').hidden = !shot; $('imgTools3').hidden = !shot;
+    $('btnShot').textContent = shot ? 'Change screenshot' : 'Import screenshot';
+    $('shotName').textContent = shot ? shot.name + ' (' + shot.base.width + ' x ' + shot.base.height + '). Drag the image to move it, Ctrl+scroll to zoom, Alt+drag moves the log. Click the preview, then arrows move the image, Alt+arrows the log, + / - zoom, 0 fit, 1 = 100%, F fill.' : 'Optional: place the log on a game screenshot. You can also drop or paste an image.';
+    if (!shot) return;
+    $('o-shx').value = String(shot.x); $('o-shy').value = String(shot.y);
+    var sw = Math.round(shot.base.width * shot.z), sh = Math.round(shot.base.height * shot.z);
+    var xlo = Math.min(0, sw - shot.cw), xhi = Math.max(0, sw - shot.cw), ylo = Math.min(0, sh - shot.ch), yhi = Math.max(0, sh - shot.ch);
+    $('o-cw').max = String(FRAME_MAX); $('o-ch').max = String(FRAME_MAX);
+    $('o-cw').value = String(shot.cw); $('o-ch').value = String(shot.ch);
+    ['r-cx', 'o-cx'].forEach(function (id) { $(id).min = String(xlo); $(id).max = String(xhi); $(id).value = String(shot.cx); });
+    ['r-cy', 'o-cy'].forEach(function (id) { $(id).min = String(ylo); $(id).max = String(yhi); $(id).value = String(shot.cy); });
+    var zp = Math.round(shot.z * 100);
+    $('r-z').value = String(zp); $('o-z').value = String(zp);
+    var W = shot.outW || shot.cw;
+    $('o-outw').value = String(W);
+    $('outInfo').textContent = '= ' + W + ' x ' + Math.max(1, Math.round(W * shot.ch / shot.cw)) + ' px';
+  }
+  /* Rotation and flip are baked into a base canvas; the crop is then taken from it. */
+  function rebuildBase() {
+    var sw = shot.src.naturalWidth, sh = shot.src.naturalHeight, r = shot.rot % 4;
+    var w = (r % 2) ? sh : sw, h = (r % 2) ? sw : sh;
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    var x = c.getContext('2d');
+    x.translate(w / 2, h / 2); x.scale(shot.flip ? -1 : 1, 1); x.rotate(r * Math.PI / 2);
+    x.drawImage(shot.src, -sw / 2, -sh / 2);
+    shot.base = c;
+  }
+  /* Default crop: 1000 x 750 taken from the image at its own pixels (nothing is scaled). */
+  var FRAME_MAX = 4000;
+  function defaultCrop() {
+    shot.z = 1;
+    shot.cw = Math.min(1000, shot.base.width); shot.ch = Math.min(750, shot.base.height);
+    shot.cx = 0; shot.cy = 0; shot.outW = null;
+  }
+  /* The background image is drawn at its zoom, offset by the crop position, inside a frame of its own size. */
+  function paintFrame(x) {
+    var b = shot.base;
+    /* At 100% the pixels are copied as they are (no filtering in any browser); smoothing is used only when the zoom really resamples. */
+    x.imageSmoothingEnabled = shot.z !== 1; x.imageSmoothingQuality = 'high';
+    x.drawImage(b, 0, 0, b.width, b.height, -shot.cx, -shot.cy, b.width * shot.z, b.height * shot.z);
+  }
+  function applyCrop() {
+    var b = shot.base;
+    shot.z = clamp(shot.z || 1, 0.1, 4);
+    shot.cw = clamp(Math.round(shot.cw) || 1000, 20, FRAME_MAX); shot.ch = clamp(Math.round(shot.ch) || 750, 20, FRAME_MAX);
+    var sw = Math.round(b.width * shot.z), sh = Math.round(b.height * shot.z);
+    shot.cx = clamp(Math.round(shot.cx) || 0, Math.min(0, sw - shot.cw), Math.max(0, sw - shot.cw));
+    shot.cy = clamp(Math.round(shot.cy) || 0, Math.min(0, sh - shot.ch), Math.max(0, sh - shot.ch));
+    shot.w = shot.cw; shot.h = shot.ch;
+    shot.x = clamp(shot.x, 0, Math.max(0, shot.w - 20)); shot.y = clamp(shot.y, 0, Math.max(0, shot.h - 20));
+    var cv = $('shotcv');
+    cv.width = shot.cw; cv.height = shot.ch;
+    paintFrame(cv.getContext('2d'));
+    syncShotUi(); fitPreview();
+  }
+  /* Change the zoom but keep the point at the middle of the frame where it is. */
+  function setZoom(z) {
+    z = clamp(z, 0.1, 4);
+    var k = z / shot.z;
+    shot.cx = (shot.cx + shot.cw / 2) * k - shot.cw / 2;
+    shot.cy = (shot.cy + shot.ch / 2) * k - shot.ch / 2;
+    shot.z = z; applyCrop();
+  }
+  function loadShot(file) {
+    if (!file || !/^image\//.test(file.type)) { say('st-png', 'That file is not an image.'); return; }
+    var url = URL.createObjectURL(file);
+    var probe = new Image();
+    probe.onload = function () {
+      if (shot && shot.url) URL.revokeObjectURL(shot.url);
+      var keep = shot ? { x: shot.x, y: shot.y } : { x: 50, y: 58 };
+      shot = { src: probe, url: url, rot: 0, flip: false, x: keep.x, y: keep.y, name: file.name || 'Pasted image' };
+      rebuildBase(); defaultCrop(); applyCrop(); render();
+    };
+    probe.onerror = function () { URL.revokeObjectURL(url); say('st-png', 'Could not read that image.'); };
+    probe.src = url;
+  }
+  function moveShot(x, y) {
+    if (!shot) return;
+    shot.x = Math.max(0, Math.min(shot.w - 20, Math.round(x)));
+    shot.y = Math.max(0, Math.min(shot.h - 20, Math.round(y)));
+    syncShotUi(); fitPreview();
+  }
+  (function bindShot() {
+    $('btnShot').addEventListener('click', function () { $('shotFile').click(); });
+    $('shotFile').addEventListener('change', function (e) { loadShot(e.target.files[0]); e.target.value = ''; });
+    $('btnShotRm').addEventListener('click', function () {
+      if (shot && shot.url) URL.revokeObjectURL(shot.url);
+      shot = null; $('shotcv').width = 1; syncShotUi(); render();
+    });
+    $('o-shx').addEventListener('change', function (e) { moveShot(Number(e.target.value) || 0, shot ? shot.y : 0); });
+    $('o-shy').addEventListener('change', function (e) { moveShot(shot ? shot.x : 0, Number(e.target.value) || 0); });
+    function numIn(id, fn) { $(id).addEventListener('change', function (e) { if (shot) { fn(Number(e.target.value)); applyCrop(); } }); }
+    function rngIn(id, fn) { $(id).addEventListener('input', function (e) { if (shot) { fn(Number(e.target.value)); applyCrop(); } }); }
+    numIn('o-cw', function (v) { shot.cw = v; }); numIn('o-ch', function (v) { shot.ch = v; });
+    numIn('o-cx', function (v) { shot.cx = v; }); numIn('o-cy', function (v) { shot.cy = v; });
+    rngIn('r-cx', function (v) { shot.cx = v; }); rngIn('r-cy', function (v) { shot.cy = v; });
+    $('btnC1000').addEventListener('click', function () { if (shot) { shot.cw = 1000; shot.ch = 750; applyCrop(); } });
+    $('btnCfull').addEventListener('click', function () { if (shot) { shot.cx = 0; shot.cy = 0; shot.cw = Math.round(shot.base.width * shot.z); shot.ch = Math.round(shot.base.height * shot.z); applyCrop(); } });
+    $('r-z').addEventListener('input', function (e) { if (shot) setZoom(Number(e.target.value) / 100); });
+    $('o-z').addEventListener('change', function (e) { if (shot) setZoom((Number(e.target.value) || 100) / 100); });
+    $('btnZ100').addEventListener('click', function () { if (shot) setZoom(1); });
+    $('btnZfill').addEventListener('click', function () { if (shot) { setZoom(Math.max(shot.cw / shot.base.width, shot.ch / shot.base.height)); shot.cx = 0; shot.cy = 0; applyCrop(); } });
+    $('btnZfit').addEventListener('click', function () { if (shot) { setZoom(Math.min(shot.cw / shot.base.width, shot.ch / shot.base.height)); shot.cx = 0; shot.cy = 0; applyCrop(); } });
+    $('o-outw').addEventListener('change', function (e) {
+      if (!shot) return;
+      var v = clamp(Math.round(Number(e.target.value)) || shot.cw, 50, 8000);
+      shot.outW = v === shot.cw ? null : v; syncShotUi();
+    });
+    [['btnO100', 1], ['btnO75', 0.75], ['btnO50', 0.5]].forEach(function (p) {
+      $(p[0]).addEventListener('click', function () { if (!shot) return; var v = Math.round(shot.cw * p[1]); shot.outW = v === shot.cw ? null : v; syncShotUi(); });
+    });
+    function reshape(fn) { if (!shot) return; fn(); rebuildBase(); defaultCrop(); applyCrop(); }
+    $('btnRotL').addEventListener('click', function () { reshape(function () { shot.rot = (shot.rot + 3) % 4; }); });
+    $('btnRotR').addEventListener('click', function () { reshape(function () { shot.rot = (shot.rot + 1) % 4; }); });
+    $('btnFlip').addEventListener('click', function () { reshape(function () { shot.flip = !shot.flip; }); });
+    var mv = $('moveH'), drag = null;
+    mv.addEventListener('pointerdown', function (e) {
+      drag = { px: e.clientX, py: e.clientY, x: shot.x, y: shot.y };
+      mv.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    mv.addEventListener('pointermove', function (e) {
+      if (drag) moveShot(drag.x + (e.clientX - drag.px) / shotZ, drag.y + (e.clientY - drag.py) / shotZ);
+    });
+    mv.addEventListener('pointerup', function () { drag = null; });
+    mv.addEventListener('pointercancel', function () { drag = null; });
+    mv.addEventListener('keydown', function (e) {
+      var d = e.shiftKey ? 10 : 1, k = e.key;
+      if (k === 'ArrowLeft') moveShot(shot.x - d, shot.y);
+      else if (k === 'ArrowRight') moveShot(shot.x + d, shot.y);
+      else if (k === 'ArrowUp') moveShot(shot.x, shot.y - d);
+      else if (k === 'ArrowDown') moveShot(shot.x, shot.y + d);
+      else return;
+      e.preventDefault();
+    });
+    var st = $('stage');
+    st.addEventListener('dragover', function (e) { e.preventDefault(); st.classList.add('drop'); });
+    st.addEventListener('dragleave', function () { st.classList.remove('drop'); });
+    st.addEventListener('drop', function (e) {
+      e.preventDefault(); st.classList.remove('drop');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) loadShot(e.dataTransfer.files[0]);
+    });
+    document.addEventListener('paste', function (e) {
+      var items = (e.clipboardData && e.clipboardData.items) || [];
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file' && /^image\//.test(items[i].type)) { loadShot(items[i].getAsFile()); e.preventDefault(); return; }
+      }
+    });
+  })();
+
+  /* ---------- Photoshop-style navigation on the preview: drag, wheel, keys ---------- */
+  (function bindNav() {
+    var st = $('stage'), box = $('shotbox'), space = false, drag = null;
+    function framePt(e) { var r = box.getBoundingClientRect(); return { x: (e.clientX - r.left) / shotZ, y: (e.clientY - r.top) / shotZ }; }
+    /* Zoom around a point of the frame, so the pixel under the cursor stays under the cursor. */
+    function zoomAt(z, fx, fy) {
+      z = clamp(z, 0.1, 4);
+      var k = z / shot.z;
+      shot.cx = (shot.cx + fx) * k - fx; shot.cy = (shot.cy + fy) * k - fy;
+      shot.z = z; applyCrop();
+    }
+    function setSpace(v) { space = v; st.classList.toggle('space', v && !!shot); }
+    box.addEventListener('pointerdown', function (e) {
+      if (!shot) return;
+      try { st.focus({ preventScroll: true }); } catch (x) { st.focus(); }
+      var onLog = $('chat').contains(e.target) || e.target === $('moveH');
+      if (e.target === $('moveH')) return;
+      var mode = null;
+      if (e.button === 1 || (e.button === 0 && (space || e.target === $('shotcv')))) mode = 'pan';
+      else if (e.button === 0 && e.altKey && onLog) mode = 'log';
+      if (!mode) return;
+      drag = { mode: mode, px: e.clientX, py: e.clientY, cx: shot.cx, cy: shot.cy, x: shot.x, y: shot.y };
+      box.setPointerCapture(e.pointerId); st.classList.add('panning'); e.preventDefault();
+    });
+    box.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var dx = (e.clientX - drag.px) / shotZ, dy = (e.clientY - drag.py) / shotZ;
+      if (drag.mode === 'pan') { shot.cx = drag.cx - dx; shot.cy = drag.cy - dy; applyCrop(); }
+      else moveShot(drag.x + dx, drag.y + dy);
+    });
+    function end() { drag = null; st.classList.remove('panning'); }
+    box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
+    box.addEventListener('wheel', function (e) {
+      if (!shot || !(e.ctrlKey || e.metaKey || e.altKey)) return;
+      e.preventDefault();
+      var p = framePt(e);
+      zoomAt(shot.z * Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015)), p.x, p.y);
+    }, { passive: false });
+    box.addEventListener('dblclick', function (e) { if (shot && e.target === $('shotcv')) { shot.z = 1; shot.cx = 0; shot.cy = 0; applyCrop(); } });
+    st.addEventListener('keydown', function (e) {
+      if (!shot || e.ctrlKey || e.metaKey) return;
+      var t = e.target;
+      if (t === $('moveH') || /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(t.tagName)) return;
+      var d = e.shiftKey ? 10 : 1, k = e.key, c = { x: shot.cw / 2, y: shot.ch / 2 };
+      if (k === ' ') { setSpace(true); e.preventDefault(); return; }
+      var ar = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k];
+      if (ar) {
+        if (e.altKey) moveShot(shot.x + ar[0] * d, shot.y + ar[1] * d);
+        else { shot.cx -= ar[0] * d; shot.cy -= ar[1] * d; applyCrop(); }
+      }
+      else if (k === '+' || k === '=') zoomAt(shot.z * 1.1, c.x, c.y);
+      else if (k === '-' || k === '_') zoomAt(shot.z / 1.1, c.x, c.y);
+      else if (k === '1') { zoomAt(1, c.x, c.y); }
+      else if (k === '0') { setZoom(Math.min(shot.cw / shot.base.width, shot.ch / shot.base.height)); shot.cx = 0; shot.cy = 0; applyCrop(); }
+      else if (k === 'f' || k === 'F') { setZoom(Math.max(shot.cw / shot.base.width, shot.ch / shot.base.height)); shot.cx = 0; shot.cy = 0; applyCrop(); }
+      else return;
+      e.preventDefault();
+    });
+    st.addEventListener('keyup', function (e) { if (e.key === ' ') setSpace(false); });
+    st.addEventListener('blur', function () { setSpace(false); });
+  })();
+
+  load();
+  buildTypes();
+  buildChips();
+  syncControls();
+  bind();
+  render();
+  ensureFont();
+})();
+</script>
+
+
+
+</body></html>
