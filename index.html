@@ -87,8 +87,8 @@ body {
 .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
 .btn.primary:hover { filter: brightness(1.06); }
 .btn[hidden] { display: none; }
-select, input[type=text], input[type=number] { font: 500 13px var(--f-body); background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
-input[type=text] { width: 100%; padding: 9px 10px; font-size: 14px; }
+select, input[type=text], input[type=search], input[type=number] { font: 500 13px var(--f-body); background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
+input[type=text], input[type=search] { width: 100%; padding: 9px 10px; font-size: 14px; }
 input[type=number] { width: 5.5em; }
 input[type=checkbox], input[type=range] { accent-color: var(--accent); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
@@ -152,6 +152,32 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
 .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 5px 10px; font: 500 12px var(--f-body); cursor: pointer; }
 .chip:hover { border-color: var(--accent); }
 .chip i { display: block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(128,128,128,.55); }
+.step { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 8px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); font: 700 11px/1 var(--f-body); letter-spacing: 0; }
+.grp { border-top: 1px solid var(--line); }
+.grp > summary, .tgrp > summary { cursor: pointer; list-style: none; padding: 10px 14px; font: 600 12px/1.2 var(--f-body); text-transform: uppercase; letter-spacing: .09em; color: var(--muted); display: flex; align-items: center; gap: 8px; user-select: none; }
+.grp > summary::-webkit-details-marker, .tgrp > summary::-webkit-details-marker { display: none; }
+.grp > summary::before, .tgrp > summary::before { content: ''; width: 6px; height: 6px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s; flex: none; }
+.grp[open] > summary::before, .tgrp[open] > summary::before { transform: rotate(45deg); }
+.grp > summary:hover, .tgrp > summary:hover { color: var(--fg); }
+.grp > .ctl:first-of-type { border-top: 0; }
+.grp[hidden] { display: none; }
+.keys { padding: 0 14px 12px; font-size: 12.5px; color: var(--muted); }
+.keys summary { cursor: pointer; color: var(--accent); }
+.keys ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.keys b { color: var(--fg); font-weight: 600; }
+.viewbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--line); background: var(--sunken); }
+.viewbar .btn { padding: 6px 10px; font-size: 12.5px; }
+.viewbar .btn[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
+.viewbar output { min-width: 5ch; text-align: center; font: 600 12.5px var(--f-mono); color: var(--fg); }
+.exportbar { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--surface); box-shadow: 0 -8px 16px -8px rgba(0,0,0,.5); }
+.exportbar .push { margin-left: auto; }
+#p-prev { overflow: clip; }
+.tsearch { padding-bottom: 0; }
+.tgrp { border-top: 1px solid var(--line); }
+.tgrp > summary { padding-left: 0; padding-right: 0; }
+.tgrp .tcnt { margin-left: auto; font: 500 11px var(--f-mono); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.tgrp[hidden] { display: none; }
+.trow[hidden] { display: none; }
 .hint { margin: 0; padding: 9px 14px; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); }
 .hint[hidden] { display: none; }
 .ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 14px; border-top: 1px solid var(--line); }
@@ -216,7 +242,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       <div class="sidepane" id="side-log" role="tabpanel" aria-labelledby="tab-log">
       <section class="panel" id="p-in">
         <div class="phead">
-          <h2>Raw log</h2>
+          <h2><span class="step">1</span>Raw log</h2>
           <div class="row">
             <span class="small muted" id="sampleNote" hidden>Example loaded, replace it with your log</span>
             <button class="btn" id="btnSample" type="button">Example</button>
@@ -238,11 +264,9 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
         <div class="pbody">
           <label class="sr" for="o-me">Your character name</label>
           <input type="text" id="o-me" placeholder="Firstname_Lastname" autocomplete="off" spellcheck="false">
-          <p class="small muted" style="margin:8px 0 0">Everything your character says or says on the phone uses the brighter “You” colors, so both sides of a conversation are easy to tell apart. Underscores and spaces both work.</p>
+          <p class="small muted" style="margin:8px 0 0">Only your character's plain chat (<i>says:</i>) uses the brighter “You” color, so both sides of a conversation are easy to tell apart. Every other line type has one color for everyone. Underscores and spaces both work.</p>
         </div>
       </section>
-      </div>
-      <div class="sidepane" id="side-set" role="tabpanel" aria-labelledby="tab-set" hidden>
       <section class="panel" id="p-opt">
         <div class="phead"><h2>Cleanup</h2></div>
         <div class="pbody opts">
@@ -253,22 +277,31 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
           <label class="opt"><input type="checkbox" id="o-under"><span>Replace _ with a space<small>Tobias_Wren becomes Tobias Wren, as on screen.</small></span></label>
         </div>
       </section>
+      </div>
+      <div class="sidepane" id="side-set" role="tabpanel" aria-labelledby="tab-set" hidden>
       <section class="panel" id="p-types">
         <div class="phead">
           <h2>Line types</h2>
           <button class="btn" id="btnColors" type="button">Default colors</button>
         </div>
+        <div class="pbody tsearch"><input type="search" id="typeSearch" placeholder="Search a line type…" aria-label="Search a line type" autocomplete="off" spellcheck="false"></div>
         <div class="pbody" id="types">
           <div class="trow thead" aria-hidden="true"><span>Color</span><span>You</span><span></span><span></span><span></span></div>
         </div>
         <p class="hint">Each line's type is detected automatically. The “You” swatch is the color used for your own lines. Untick a type to leave it out of the result.</p>
+      </section>
+      <section class="panel" id="p-reset">
+        <div class="pbody" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <button class="btn" id="btnReset" type="button">Reset settings</button>
+          <span class="small muted">Puts colors, sizes and options back to their defaults. Your log is kept.</span>
+        </div>
       </section>
       </div>
     </div>
     <div class="col main">
       <section class="panel" id="p-prev">
         <div class="phead">
-          <h2>Preview</h2>
+          <h2><span class="step">2</span>Preview and export</h2>
           <div class="row">
             <button class="btn" id="btnUndo" type="button" hidden>Undo edits</button>
             <div class="seg" role="group" aria-label="Background">
@@ -277,6 +310,14 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
             </div>
             <input type="color" id="o-bgc" aria-label="Background color" title="Background color" hidden>
           </div>
+        </div>
+        <div class="viewbar" id="viewbar" role="toolbar" aria-label="View zoom">
+          <button class="btn" id="vzOut" type="button" aria-label="Zoom out" title="Zoom out (Ctrl + -)">&minus;</button>
+          <output id="vzPct" aria-live="polite">100 %</output>
+          <button class="btn" id="vzIn" type="button" aria-label="Zoom in" title="Zoom in (Ctrl + +)">+</button>
+          <button class="btn" id="vz100" type="button" data-vm="100" title="Actual pixels, 1:1 (Ctrl + 1)">100 %</button>
+          <button class="btn" id="vzFit" type="button" data-vm="fit" title="Fit the whole image in the window (Ctrl + 0)">Fit to screen</button>
+          <button class="btn" id="vzFill" type="button" data-vm="fill" title="Fill the width of the window">Fill screen</button>
         </div>
         <div class="stage" id="stage" tabindex="0"><div class="shotbox" id="shotbox"><div class="shotin" id="shotin"><canvas id="shotcv" hidden aria-label="Imported screenshot"></canvas><div class="chat" id="chat" data-bg="clear"></div><div class="chat" id="chat2" data-bg="clear" hidden></div><div class="fl-layer" id="flLayer"></div><button class="btn mvh" id="moveH" type="button" hidden aria-label="Move the log: drag, or use the arrow keys">&#10021; Move</button><button class="btn mvh" id="moveH2" type="button" hidden aria-label="Move the bottom logs: drag, or use the arrow keys">&#10021; Bottom logs</button></div></div></div>
         <div class="selbar" id="selbar" hidden>
@@ -299,6 +340,8 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
           <button class="btn" id="pickClose" type="button">Done</button>
         </div>
         <p class="hint" id="hint">Click a line to change its type, color or distance. To color only part of a line (an action inside dialogue, speech inside a /me), select those words with the mouse or your finger.</p>
+        <details class="grp" open>
+          <summary>Text and bars</summary>
         <div class="ctl">
           <label class="opt" style="align-items:center"><input type="checkbox" id="o-bars" style="margin:0"><span>Bars behind text</span></label>
           <label class="inl" for="o-barc">Bar color <input type="color" id="o-barc"></label>
@@ -310,6 +353,14 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
             <input type="number" id="o-widthn" min="200" max="2000" step="10" aria-label="Width in pixels"> <span class="small muted">px</span>
           </label>
         </div>
+        <div class="ctl">
+          <label>Font
+            <select id="o-font" aria-label="Font"></select>
+          </label>
+        </div>
+        </details>
+        <details class="grp" id="grpShot" open>
+          <summary>Screenshot</summary>
         <div class="ctl">
           <button class="btn" id="btnShot" type="button">Import screenshot</button>
           <input type="file" id="shotFile" accept="image/*" hidden>
@@ -346,6 +397,21 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
           <button class="btn" id="btnRotR" type="button">Right</button>
           <button class="btn" id="btnFlip" type="button">Flip</button>
         </div>
+        <details class="keys">
+          <summary>Mouse and keyboard shortcuts</summary>
+          <ul>
+            <li><b>Drag the image</b> to move it (or hold Space and drag anywhere, even over the log).</li>
+            <li><b>Ctrl + scroll</b> (or pinch on a trackpad) zooms around the cursor.</li>
+            <li><b>Alt + drag</b> on the log moves the log. Floating labels are dragged directly.</li>
+            <li>Click the preview, then <b>arrows</b> move the image (Shift = 10 px) and <b>Alt + arrows</b> move the log.</li>
+            <li><b>+ / -</b> zoom, <b>1</b> = 100%, <b>0</b> fit in frame, <b>F</b> fill frame, double-click the image = 100%.</li>
+            <li>View zoom (the preview only, not the PNG): the bar above the preview, or <b>Ctrl + 1</b> = 100%, <b>Ctrl + 0</b> = fit to screen, <b>Ctrl + +/-</b> zoom, with the preview focused.</li>
+            <li>With a label selected: arrows move it, <b>Delete</b> removes it, <b>Esc</b> deselects.</li>
+          </ul>
+        </details>
+        </details>
+        <details class="grp" id="grpFlt" hidden open>
+          <summary>Floating labels</summary>
         <div class="ctl" id="fltBar" hidden>
           <b class="small">Floating labels</b>
           <button class="btn" id="btnFltItem" type="button">+ Item label</button>
@@ -365,11 +431,11 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
           <button class="btn" id="btnFltDup" type="button">Duplicate</button>
           <button class="btn" id="btnFltDel" type="button">Delete</button>
         </div>
-        <div class="ctl">
-          <label>Font
-            <select id="o-font" aria-label="Font"></select>
-          </label>
-          <button class="btn" id="btnReset" type="button">Reset settings</button>
+        </details>
+        <div class="exportbar">
+          <button class="btn" id="btnDir" type="button" hidden title="Pick the folder where the PNGs are saved. Files are numbered from what the folder already holds.">Choose save folder</button>
+          <button class="btn" id="btnDirClear" type="button" hidden aria-label="Stop using this folder" title="Stop using this folder">&times;</button>
+          <span class="small muted" id="dirName"></span>
           <span class="status" id="st-png" role="status" aria-live="polite"></span>
           <button class="btn push" id="btnCopy" type="button">Copy image</button>
           <button class="btn primary" id="btnPng" type="button">Download PNG</button>
@@ -386,13 +452,13 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   /* color = everyone else, mine = your own lines (only for types that have it) */
   var TYPES = [
     { id: 'say',     label: 'Say',               hint: 'Tobias Wren says: …',        color: '#C9C9C9', mine: '#FFFFFF' },
-    { id: 'shout',   label: 'Shout',             hint: 'Tobias Wren shouts: …',      color: '#C9C9C9', mine: '#FFFFFF' },
-    { id: 'low',     label: 'Low voice',         hint: 'Tobias Wren says [low]: …',  color: '#A6ACAF', mine: '#E3E7E9' },
-    { id: 'lower',   label: 'Lower voice',       hint: 'Tobias Wren says [lower]: …', color: '#999999', mine: '#D5D5D5' },
-    { id: 'whisper', label: 'Whisper',           hint: 'Tobias Wren whispers: …',    color: '#EDA841', mine: '#FFCB7A' },
+    { id: 'shout',   label: 'Shout',             hint: 'Tobias Wren shouts: …',      color: '#FFFFFF' },
+    { id: 'low',     label: 'Low voice',         hint: 'Tobias Wren says [low]: …',  color: '#A6ACAF' },
+    { id: 'lower',   label: 'Lower voice',       hint: 'Tobias Wren says [lower]: …', color: '#999999' },
+    { id: 'whisper', label: 'Whisper',           hint: 'Tobias Wren whispers: …',    color: '#EDA841' },
     { id: 'lowto',   label: 'Low voice to you',  hint: '[!] Tobias Wren says [low] (to You): …', color: '#A6ACAF' },
-    { id: 'carw',    label: 'Whisper (Car)',     hint: 'Tobias Wren whispers (car): …', color: '#FFFF00', mine: '#FFFF99' },
-    { id: 'phone',   label: 'Phone call',        hint: 'Tobias Wren says (phone): …', color: '#FFFF00', mine: '#FFFFFF' },
+    { id: 'carw',    label: 'Whisper (Car)',     hint: 'Tobias Wren whispers (car): …', color: '#FFFF00' },
+    { id: 'phone',   label: 'Phone call',        hint: 'Tobias Wren says (phone): …', color: '#FFFF00' },
     { id: 'me',      label: '/me',               hint: '* Tobias Wren takes out a gun.', color: '#C2A2DA' },
     { id: 'do',      label: '/do',               hint: '* A gun is visible. (( Tobias Wren ))', color: '#C2A2DA' },
     { id: 'sms',     label: 'Phone messages',    hint: '(iFruit 15) Message sent to … / from …', color: '#FFA500' },
@@ -423,7 +489,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   var DIST = [1, 0.78, 0.58, 0.4];
   var DIST_LABEL = ['Close', 'Medium', 'Far', 'Very far'];
   var KEY = 'chatlog-magician-v3';
-  var PAL = 4; /* bump when the default colors change, so saved old colors are not kept */
+  var PAL = 6; /* bump when the default colors change, so saved old colors are not kept */
   var DEF_OPTS = { ts: true, codes: true, under: true, bold: false, bars: true, bg: 'clear', bgColor: '#000000', barColor: '#000000', size: 13.33, lh: 0, outline: -1, width: 784, font: 'arial', me: 'Tobias_Wren', junk: true, junkWords: '' };
   var PNG_SCALE = 1; /* 1:1, so the PNG is exactly as wide as the Width you set */
   var FONTS = [
@@ -803,6 +869,20 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   /* ---------- Building the interface ---------- */
   function buildTypes() {
     var box = $('types');
+    var CATS = [
+      ['Speech', ['say', 'shout', 'low', 'lower', 'lowto', 'whisper', 'carw', 'ooc'], true],
+      ['Actions', ['me', 'do'], true],
+      ['Phone and radio', ['phone', 'sms', 'pinfo', 'radio', 'dept', 'mega', 'inter', 'mic'], false],
+      ['System and info', ['sys', 'info', 'warn', 'error', 'success', 'tag', 'kill', 'weather', 'drug', 'gps', 'money'], false],
+      ['Other', ['junk', 'other'], false]
+    ], catOf = {}, groups = {};
+    CATS.forEach(function (c) { c[1].forEach(function (id) { catOf[id] = c[0]; }); });
+    CATS.forEach(function (c) {
+      var g = document.createElement('details');
+      g.className = 'tgrp'; g.open = c[2];
+      g.innerHTML = '<summary>' + c[0] + '<span class="tcnt"></span></summary><div class="tbody"></div>';
+      box.appendChild(g); groups[c[0]] = g;
+    });
     TYPES.forEach(function (t) {
       var row = document.createElement('div');
       row.className = 'trow';
@@ -812,10 +892,23 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
         '<label class="tname" for="s-' + t.id + '"><span class="tl">' + t.label + '</span><span class="tex">' + t.hint + '</span></label>' +
         '<span class="tcount" id="n-' + t.id + '" title="Lines of this type">0</span>' +
         '<input type="checkbox" id="s-' + t.id + '" aria-label="Show: ' + t.label + '">';
-      box.appendChild(row);
+      row.dataset.q = (t.label + ' ' + t.hint + ' ' + t.id).toLowerCase();
+      (groups[catOf[t.id] || 'Other']).querySelector('.tbody').appendChild(row);
       $('c-' + t.id).addEventListener('input', function (e) { state.colors[t.id] = e.target.value.toUpperCase(); save(); render(); });
       if (t.mine) $('m-' + t.id).addEventListener('input', function (e) { state.mine[t.id] = e.target.value.toUpperCase(); save(); render(); });
       $('s-' + t.id).addEventListener('change', function (e) { state.show[t.id] = e.target.checked; save(); render(); });
+    });
+
+    CATS.forEach(function (c) { groups[c[0]].querySelector('.tcnt').textContent = groups[c[0]].querySelectorAll('.trow').length; });
+    /* Search: shows only matching types and opens the groups that contain one. */
+    $('typeSearch').addEventListener('input', function (e) {
+      var q = e.target.value.trim().toLowerCase();
+      CATS.forEach(function (c) {
+        var g = groups[c[0]], any = false;
+        g.querySelectorAll('.trow').forEach(function (r) { var ok = !q || r.dataset.q.indexOf(q) >= 0; r.hidden = !ok; if (ok) any = true; });
+        g.hidden = !any;
+        if (q) g.open = any; else g.open = c[2];
+      });
     });
 
     var sel = $('selType');
@@ -890,6 +983,25 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
 
   /* The preview always lays out at the real width (so line breaks match the PNG). If the column is narrower, it is shrunk to fit instead of being squeezed. */
   var shot = null, shotZ = 1;
+  /* View zoom (only how the preview is shown, never the PNG): auto = shrink to the width when too big, fit = whole image in the window, fill = full width, 100 = 1:1, custom = +/- steps. */
+  var viewMode = 'auto', viewZ = 1;
+  function viewScale(w, h) {
+    var st = $('stage'), cs = getComputedStyle(st), aw = Math.max(50, st.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0)), ah = Math.max(240, window.innerHeight - 280), z;
+    if (viewMode === '100') z = 1;
+    else if (viewMode === 'custom') z = viewZ;
+    else if (viewMode === 'fill') z = aw / w;
+    else if (viewMode === 'fit') z = Math.min(aw / w, ah / h);
+    else z = Math.min(1, aw / w);
+    return clamp(z, 0.1, 4);
+  }
+  function syncViewUi(z) {
+    var o = $('vzPct'); if (o) o.textContent = Math.round(z * 100) + ' %';
+    [].forEach.call(document.querySelectorAll('#viewbar [data-vm]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.vm === viewMode)); });
+  }
+  function setView(mode, z) { viewMode = mode; if (z) viewZ = clamp(z, 0.1, 4); fitPreview(); }
+  function stepView(f) { setView('custom', clamp(effZ * f, 0.1, 4)); }
+  var effZ = 1;
+
   function fitPreview() {
     var st = $('stage'), chat = $('chat'), chat2 = $('chat2'), box = $('shotbox'), inn = $('shotin'), mv = $('moveH'), mv2 = $('moveH2');
     if (!st) return;
@@ -899,8 +1011,8 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     mv.hidden = !shot || chat.hidden; mv2.hidden = !shot || chat2.hidden;
     mv.textContent = chat2.hidden ? '\u2725 Move' : '\u2725 Top logs';
     if (shot) {
-      var z = Math.min(1, (st.clientWidth - 24) / shot.w);
-      shotZ = z;
+      var z = viewScale(shot.w, shot.h);
+      shotZ = z; effZ = z; syncViewUi(z);
       box.style.width = Math.round(shot.w * z) + 'px'; box.style.height = Math.round(shot.h * z) + 'px';
       inn.style.width = shot.w + 'px'; inn.style.height = shot.h + 'px'; inn.style.transform = 'scale(' + z + ')';
       chat.style.left = shot.x + 'px'; chat.style.top = shot.y + 'px';
@@ -918,8 +1030,10 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     }
     renderFloats();
     box.removeAttribute('style'); inn.removeAttribute('style'); chat.style.left = ''; chat.style.top = ''; chat2.style.left = ''; chat2.style.top = '';
-    var f = Math.min(1, (st.clientWidth - 24) / state.opts.width);
-    if (f < 0.999) { chat.style.zoom = String(Math.max(0.3, f)); chat2.style.zoom = chat.style.zoom; }
+    var hh = chat.offsetHeight + (chat2.hidden ? 0 : chat2.offsetHeight);
+    var f = viewScale(state.opts.width, Math.max(1, hh));
+    effZ = f; syncViewUi(f);
+    if (Math.abs(f - 1) > 0.001) { chat.style.zoom = String(f); chat2.style.zoom = chat.style.zoom; }
   }
 
   function styleChat(chat) {
@@ -1211,39 +1325,121 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     });
   }
 
+  /* ---------- Where the PNG goes, and what it is called ---------- */
+  var saveDir = null; /* a folder chosen by the user (File System Access API), when the browser allows it */
+  var DIRKEY = 'saveDir';
+  function idb(fn) {
+    return new Promise(function (res) {
+      try {
+        var rq = indexedDB.open('chatlog-magician', 1);
+        rq.onupgradeneeded = function () { rq.result.createObjectStore('kv'); };
+        rq.onerror = function () { res(null); };
+        rq.onsuccess = function () {
+          try { fn(rq.result.transaction('kv', 'readwrite').objectStore('kv'), res); } catch (e) { res(null); }
+        };
+      } catch (e) { res(null); }
+    });
+  }
+  function idbGet(k) { return idb(function (st, res) { var r = st.get(k); r.onsuccess = function () { res(r.result || null); }; r.onerror = function () { res(null); }; }); }
+  function idbSet(k, v) { return idb(function (st, res) { var r = v ? st.put(v, k) : st.delete(k); r.onsuccess = function () { res(true); }; r.onerror = function () { res(null); }; }); }
+  function syncDirUi() {
+    var ok = typeof window.showDirectoryPicker === 'function';
+    $('btnDir').hidden = !ok;
+    $('dirName').textContent = saveDir ? 'Saving to: ' + saveDir.name : '';
+    $('btnDirClear').hidden = !saveDir;
+    $('btnDir').textContent = saveDir ? 'Change folder' : 'Choose save folder';
+  }
+  function safeName(n) { return String(n).replace(/[\\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim(); }
+  function reEsc(t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  /* "screen - Name - 3" when the PNG has a screenshot, "chatlogs dcp" when it is only logs. The number follows what the folder already holds. */
+  function pngName(existing) {
+    var who = safeName(String(state.opts.me || '').replace(/_/g, ' ')) || 'Unknown', i, m, max = 0, hit = false, lc;
+    if (shot) {
+      var pre = 'screen - ' + who + ' - ', re = new RegExp('^' + reEsc(pre) + '(\\d+)\\.png$', 'i');
+      existing.forEach(function (n) { if ((m = re.exec(n))) max = Math.max(max, Number(m[1])); });
+      return pre + (max + 1) + '.png';
+    }
+    var base = 'chatlogs dcp', re2 = new RegExp('^' + reEsc(base) + '(?: (\\d+))?\\.png$', 'i');
+    existing.forEach(function (n) { if ((m = re2.exec(n))) { hit = true; max = Math.max(max, Number(m[1] || 1)); } });
+    return hit ? base + ' ' + (max + 1) + '.png' : base + '.png';
+  }
+  /* Without a chosen folder the browser decides where it goes, so the number is counted here. */
+  function looseName() {
+    if (!shot) return pngName([]);
+    var who = safeName(String(state.opts.me || '').replace(/_/g, ' ')) || 'Unknown', key = 'chatlog-magician-n-' + who, n = 0;
+    try { n = Number(localStorage.getItem(key)) || 0; localStorage.setItem(key, String(n + 1)); } catch (e) { n = 0; }
+    return 'screen - ' + who + ' - ' + (n + 1) + '.png';
+  }
+  function listDir(dir) {
+    var out = [];
+    return (async function () { for await (var e of dir.values()) if (e.kind === 'file') out.push(e.name); return out; })().then(function () { return out; });
+  }
+  function saveToFolder(blob) {
+    return (async function () {
+      var perm = saveDir.queryPermission ? await saveDir.queryPermission({ mode: 'readwrite' }) : 'granted';
+      if (perm !== 'granted' && saveDir.requestPermission) perm = await saveDir.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') throw new Error('permission');
+      var name = pngName(await listDir(saveDir));
+      var fh = await saveDir.getFileHandle(name, { create: true });
+      var w = await fh.createWritable();
+      await w.write(blob); await w.close();
+      return name;
+    })();
+  }
+
   function downloadPng(statusId) {
     if (!currentVis.length && !currentVis2.length) { say(statusId, 'Nothing to download.'); return; }
-    var canvas = buildPng();
-    var getDl = downloads ? Promise.resolve(downloads) : (window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null));
-    getDl.then(function (d) {
-      if (!d) {
-        /* Outside claude.ai: a normal browser download. */
-        canvas.toBlob(function (blob) {
-          if (!blob) { say(statusId, 'Could not build the PNG.'); return; }
-          var url = URL.createObjectURL(blob), a = document.createElement('a');
-          a.href = url; a.download = 'chatlog.png';
-          document.body.appendChild(a); a.click(); a.remove();
-          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-          say(statusId, 'PNG downloaded.' + (canvas.dataset.reduced ? ' (Very long log: reduced size. Split it in two for a sharper image.)' : ''));
-        }, 'image/png');
-        return;
+    var canvas = buildPng(), note = canvas.dataset.reduced ? ' (Very long log: reduced size. Split it in two for a sharper image.)' : '';
+    canvas.toBlob(function (blob) {
+      if (!blob) { say(statusId, 'Could not build the PNG.'); return; }
+      function viaDownload() {
+        var name = looseName();
+        var getDl = downloads ? Promise.resolve(downloads) : (window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null));
+        getDl.then(function (d) {
+          if (!d) {
+            /* Outside claude.ai: a normal browser download. */
+            var url = URL.createObjectURL(blob), a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+            say(statusId, 'Downloaded as ' + name + '.' + note);
+            return;
+          }
+          downloads = d;
+          d.save({ filename: name, data: blob }).then(function () {
+            say(statusId, 'Saved as ' + name + '.' + note);
+          }, function (err) {
+            if (err && err.code === 'declined') { say(statusId, 'Download cancelled.'); return; }
+            say(statusId, 'Download failed' + (err && err.code ? ' (' + err.code + ')' : '') + '.');
+          });
+        }, function () { say(statusId, 'Download is not available in this view.'); });
       }
-      downloads = d;
-      canvas.toBlob(function (blob) {
-        if (!blob) { say(statusId, 'Could not build the PNG.'); return; }
-        d.save({ filename: 'chatlog.png', data: blob }).then(function () {
-          say(statusId, 'PNG saved.' + (canvas.dataset.reduced ? ' (Very long log: reduced size. Split it in two for a sharper image.)' : ''));
-        }, function (err) {
-          if (err && err.code === 'declined') { say(statusId, 'Download cancelled.'); return; }
-          say(statusId, 'Download failed' + (err && err.code ? ' (' + err.code + ')' : '') + '.');
-        });
-      }, 'image/png');
-    }, function () { say(statusId, 'Download is not available in this view.'); });
+      if (!saveDir) { viaDownload(); return; }
+      saveToFolder(blob).then(function (name) {
+        say(statusId, 'Saved as ' + name + ' in ' + saveDir.name + '.' + note);
+      }, function (err) {
+        say(statusId, (err && err.message === 'permission' ? 'No access to the folder anymore. ' : 'Could not write in the folder. ') + 'Downloading instead.');
+        viaDownload();
+      });
+    }, 'image/png');
+  }
+  function bindSave() {
+    $('btnDir').addEventListener('click', function () {
+      window.showDirectoryPicker({ mode: 'readwrite', id: 'chatlog-magician' }).then(function (h) {
+        saveDir = h; idbSet(DIRKEY, h); syncDirUi(); say('st-png', 'PNGs will be saved in ' + h.name + '.');
+      }, function (err) {
+        if (err && err.name === 'AbortError') return;
+        say('st-png', 'This view does not allow choosing a folder. Open the website itself to use it.');
+      });
+    });
+    $('btnDirClear').addEventListener('click', function () { saveDir = null; idbSet(DIRKEY, null); syncDirUi(); say('st-png', 'Back to the normal download.'); });
+    syncDirUi();
+    idbGet(DIRKEY).then(function (h) { if (h && h.kind === 'directory') { saveDir = h; syncDirUi(); } });
   }
 
   /* ---------- Coloring part of a line ---------- */
   var CHIPS = [
-    ['auto', 'Auto'], ['say+', 'You say'], ['say', 'Others say'], ['low+', 'You low'], ['low', 'Others low'],
+    ['auto', 'Auto'], ['say+', 'You say'], ['say', 'Others say'], ['low', 'Low'],
     ['me', '/me'], ['phone', 'Phone'], ['gps', 'GPS, items'], ['ooc', 'OOC']
   ];
   var HIDES = [['blur', 'Blur'], ['block', 'Block'], ['show', 'Show again']];
@@ -1460,6 +1656,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     });
 
     $('btnPng').addEventListener('click', function () { downloadPng('st-png'); });
+    bindSave();
     $('btnCopy').addEventListener('click', function () { copyPng('st-png'); });
     var resetTimer = null;
     $('btnReset').addEventListener('click', function () {
@@ -1512,7 +1709,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     $('imgTools').hidden = !shot; $('imgTools2').hidden = !shot; $('imgTools3').hidden = !shot;
     syncFloatUi();
     $('btnShot').textContent = shot ? 'Change screenshot' : 'Import screenshot';
-    $('shotName').textContent = shot ? shot.name + ' (' + shot.base.width + ' x ' + shot.base.height + '). Drag the image to move it, Ctrl+scroll to zoom, Alt+drag moves the log. Click the preview, then arrows move the image, Alt+arrows the log, + / - zoom, 0 fit, 1 = 100%, F fill.' : 'Optional: place the log on a game screenshot. You can also drop or paste an image.';
+    $('shotName').textContent = shot ? shot.name + ' (' + shot.base.width + ' x ' + shot.base.height + ')' : 'Optional: drop or paste an image to place the log on a screenshot.';
     if (!shot) return;
     $('o-shx').value = String(shot.x); $('o-shy').value = String(shot.y);
     var sw = Math.round(shot.base.width * shot.z), sh = Math.round(shot.base.height * shot.z);
@@ -1735,6 +1932,18 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       zoomAt(shot.z * Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015)), p.x, p.y);
     }, { passive: false });
     box.addEventListener('dblclick', function (e) { if (shot && e.target === $('shotcv')) { shot.z = 1; shot.cx = 0; shot.cy = 0; applyCrop(); } });
+    $('vzIn').addEventListener('click', function () { stepView(1.25); });
+    $('vzOut').addEventListener('click', function () { stepView(0.8); });
+    [].forEach.call(document.querySelectorAll('#viewbar [data-vm]'), function (b) { b.addEventListener('click', function () { setView(b.dataset.vm); }); });
+    /* Photoshop keys: Ctrl+0 fit, Ctrl+1 actual pixels, Ctrl +/- zoom (while the preview has focus). */
+    st.addEventListener('keydown', function (e) {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+      var k = e.key;
+      if (k === '0') setView('fit'); else if (k === '1') setView('100');
+      else if (k === '+' || k === '=') stepView(1.25); else if (k === '-' || k === '_') stepView(0.8);
+      else return;
+      e.preventDefault();
+    });
     st.addEventListener('keydown', function (e) {
       if (!shot || e.ctrlKey || e.metaKey) return;
       var t = e.target;
@@ -1829,7 +2038,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     f.x = clamp(Math.round(nx), -200, Math.max(0, shot.w - 5)); f.y = clamp(Math.round(ny), -200, Math.max(0, shot.h - 5));
   }
   function syncFloatUi() {
-    $('fltBar').hidden = !shot;
+    $('fltBar').hidden = !shot; $('grpFlt').hidden = !shot;
     var f = shot ? fltGet() : null;
     $('fltEdit').hidden = !f;
     if (!f) return;
@@ -2074,4 +2283,9 @@ input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.2)}
   });
 })();
 </script>
+<style id="modern-fix">
+/* Fixes for the combination with the reorganized layout */
+.phead h2:has(.step)::before { display: none; }
+@media (max-width: 900px) { .exportbar #btnCopy, .exportbar #btnPng { display: none; } }
+</style>
 </body></html>
