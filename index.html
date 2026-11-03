@@ -1911,4 +1911,167 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
 </script>
 
 
+<!-- ===== MODERN LAYER: paste this whole block just before </body>. It only restyles and adds interactions; the tool's logic is untouched. ===== -->
+<style id="modern">
+:root{--r:12px;--ease:cubic-bezier(.2,.8,.2,1)}
+html{scroll-behavior:smooth}
+::selection{background:var(--accent);color:var(--accent-fg)}
+html{background:#131318;background:var(--bg)}
+body{background-color:var(--bg);background-image:radial-gradient(900px 420px at 50% -80px,var(--glow,rgba(253,175,15,.14)),transparent 70%);background-attachment:fixed}
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+
+/* Panels: soft depth, accent dot, hover glow */
+.panel{border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 90px),var(--surface);box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 18px 40px -26px #000;transition:border-color .25s}
+.panel:hover{border-color:var(--accent-line,var(--accent))}
+.phead{background:linear-gradient(90deg,var(--accent-soft),transparent 55%)}
+.phead h2{color:var(--fg)}
+.phead h2::before{content:"";display:inline-block;width:6px;height:6px;margin-right:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);vertical-align:2px}
+
+/* Buttons: lift, press, ripple, icons */
+.btn:not(.mvh){position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;transition:transform .15s var(--ease),border-color .2s,box-shadow .2s,filter .2s}
+.btn:not(.mvh):hover{transform:translateY(-1px);box-shadow:0 8px 18px -12px var(--accent)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--accent-2,var(--accent)),var(--accent));box-shadow:0 8px 22px -10px var(--accent)}
+.rip{position:absolute;border-radius:50%;background:currentColor;opacity:.25;transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none}
+@keyframes rip{to{transform:scale(1);opacity:0}}
+#btnPng::before,#dockPng::before,#btnCopy::before,#dockCopy::before,#btnShot::before{content:"";width:15px;height:15px;flex:none;background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+#btnPng,#dockPng{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12m0 0l-4-4m4 4l4-4M4 21h16'/%3E%3C/svg%3E")}
+#btnCopy,#dockCopy{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M5 15V6a2 2 0 012-2h9'/%3E%3C/svg%3E")}
+#btnShot{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Ccircle cx='9' cy='10' r='1.5'/%3E%3Cpath d='M21 16l-5-5-8 9'/%3E%3C/svg%3E")}
+
+/* Inputs: focus glow, modern sliders, switches */
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--ring,rgba(253,175,15,.3))}
+textarea,input[type=text],input[type=number],select{transition:border-color .2s,box-shadow .2s}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:var(--line);cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);transition:transform .15s}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.2)}
+.opt input[type=checkbox],#o-bars{-webkit-appearance:none;appearance:none;width:34px;height:20px;border-radius:20px;background:var(--line);position:relative;flex:none;cursor:pointer;transition:background .2s}
+.opt input[type=checkbox]::after,#o-bars::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s var(--ease),background .2s}
+.opt input[type=checkbox]:checked,#o-bars:checked{background:var(--accent)}
+.opt input[type=checkbox]:checked::after,#o-bars:checked::after{transform:translateX(14px);background:var(--accent-fg)}
+
+/* Tabs with a sliding indicator, segmented controls */
+.tabs{position:relative}
+.tab{transition:color .2s}
+.tab[aria-selected=true]{box-shadow:none}
+.tabind{position:absolute;bottom:-1px;height:2px;border-radius:2px;background:var(--accent);box-shadow:0 0 12px var(--accent);transition:left .3s var(--ease),width .3s var(--ease)}
+.seg button{transition:background .2s,color .2s}
+
+/* Header, accent picker, swatches */
+.top h1 .script{transition:transform .35s var(--ease)}
+.top h1:hover .script{transform:rotate(-1deg) scale(1.05)}
+.strip i{transition:transform .18s var(--ease)}
+.strip i:hover{transform:translateY(-4px) scale(1.18)}
+.themes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.themes button{width:22px;height:22px;padding:0;border-radius:50%;border:2px solid transparent;background:var(--c);cursor:pointer;transition:transform .2s var(--ease),box-shadow .2s}
+.themes button:hover{transform:scale(1.2)}
+.themes button[aria-pressed=true]{border-color:#fff;box-shadow:0 0 0 2px var(--bg),0 0 14px var(--c)}
+
+/* Preview: drop overlay, lines */
+.stage{position:relative}
+.stage.drop::after{content:"Drop your screenshot";position:absolute;inset:8px;display:grid;place-items:center;background:rgba(10,10,14,.72);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border:2px dashed var(--accent);border-radius:12px;color:var(--accent);font:600 16px var(--f-body);z-index:9;pointer-events:none}
+.stage.drop{outline:none}
+.chip{transition:transform .15s var(--ease),border-color .2s}
+.chip:hover{transform:translateY(-1px)}
+
+/* Toast and mobile dock */
+.toast{position:fixed;left:50%;bottom:24px;z-index:60;transform:translate(-50%,20px);opacity:0;padding:10px 16px;border-radius:999px;background:var(--surface);color:var(--fg);border:1px solid var(--accent);box-shadow:0 12px 30px -10px #000,0 0 22px -8px var(--accent);font:600 13px var(--f-body);pointer-events:none;transition:opacity .25s,transform .35s var(--ease);max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.dock{display:none}
+@media (max-width:900px){
+  .dock{position:fixed;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:50;display:flex;gap:8px;padding:8px;border-radius:16px;background:rgba(26,26,32,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 20px 40px -10px #000}
+  .dock .btn{flex:1;justify-content:center;padding:12px}
+  body{padding-bottom:96px}
+  .toast{bottom:92px}
+}
+
+/* Entrance */
+@media (prefers-reduced-motion:no-preference){
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}}
+  .panel{animation:rise .55s var(--ease) both;animation-delay:calc(var(--i,0)*70ms)}
+  .top h1{animation:rise .6s var(--ease) both}
+}
+</style>
+<script id="modern-js">
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* Opened on its own this file has no page to decorate: say so instead of showing a blank screen. */
+  if (!document.querySelector('.shell')) {
+    var n = document.createElement('div');
+    n.style.cssText = 'font:16px/1.5 system-ui,sans-serif;max-width:520px;margin:15vh auto;padding:24px;text-align:center;color:#222;background:#fff;border:2px solid #FDAF0F;border-radius:12px;position:relative;z-index:5';
+    n.innerHTML = '<b>This file is an add-on, not a page.</b><br>Open your index.html and paste the whole content of this file just before &lt;/body&gt;.';
+    var put = function () { document.body.appendChild(n); };
+    if (document.body) put(); else document.addEventListener('DOMContentLoaded', put);
+    return;
+  }
+
+  /* Accent color picker, remembered between visits */
+  var THEMES = [['Gold', '#FDAF0F', '#FDD90F'], ['Orange', '#FF7A18', '#FFA24D'], ['Red', '#FF4D5E', '#FF7F8B'], ['Green', '#3DDC84', '#7DF0AE'], ['Sky', '#4DA3FF', '#8CC4FF'], ['Pink', '#FF5FA2', '#FF93C0'], ['Violet', '#A78BFA', '#C4B0FF']];
+  var box = document.createElement('div');
+  box.className = 'themes'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Accent color');
+  function rgba(hex, a) { var n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; }
+  function apply(i, store) {
+    var t = THEMES[i] || THEMES[0], r = document.documentElement.style;
+    r.setProperty('--accent', t[1]); r.setProperty('--accent-2', t[2]); r.setProperty('--accent-soft', rgba(t[1], .12)); r.setProperty('--glow', rgba(t[1], .14)); r.setProperty('--accent-line', rgba(t[1], .45)); r.setProperty('--ring', rgba(t[1], .3));
+    [].forEach.call(box.children, function (b, k) { b.setAttribute('aria-pressed', String(k === i)); });
+    if (store) { try { localStorage.setItem('cm-accent', String(i)); } catch (e) { /* storage unavailable */ } }
+  }
+  THEMES.forEach(function (t, i) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.style.setProperty('--c', t[1]); b.title = t[0]; b.setAttribute('aria-label', 'Accent ' + t[0]);
+    b.addEventListener('click', function () { apply(i, true); });
+    box.appendChild(b);
+  });
+  var top = document.querySelector('.top');
+  if (top) top.appendChild(box);
+  var saved = 0; try { saved = Number(localStorage.getItem('cm-accent')) || 0; } catch (e) { /* storage unavailable */ }
+  apply(saved, false);
+
+  /* Panels come in one after the other */
+  [].forEach.call(document.querySelectorAll('.panel'), function (p, i) { p.style.setProperty('--i', i); });
+
+  /* Sliding tab indicator */
+  var tabs = document.querySelector('.tabs');
+  if (tabs) {
+    var ind = document.createElement('span'); ind.className = 'tabind'; tabs.appendChild(ind);
+    var place = function () { var a = tabs.querySelector('.tab[aria-selected=true]'); if (a) { ind.style.left = a.offsetLeft + 'px'; ind.style.width = a.offsetWidth + 'px'; } };
+    place(); tabs.addEventListener('click', function () { setTimeout(place, 0); }); window.addEventListener('resize', place);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+  }
+
+  /* Ripple on buttons */
+  document.addEventListener('pointerdown', function (e) {
+    var b = e.target.closest && e.target.closest('.btn:not(.mvh)');
+    if (!b || b.disabled) return;
+    var r = b.getBoundingClientRect(), s = document.createElement('span'), d = Math.max(r.width, r.height) * 2;
+    s.className = 'rip'; s.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - r.left - d / 2) + 'px;top:' + (e.clientY - r.top - d / 2) + 'px';
+    b.appendChild(s); setTimeout(function () { s.remove(); }, 600);
+  });
+
+  /* Toast: mirrors every status message of the tool (saved, copied, errors) */
+  var toast = document.createElement('div'), tt = 0;
+  toast.className = 'toast'; toast.setAttribute('role', 'status'); document.body.appendChild(toast);
+  function say(msg) { if (!msg) return; toast.textContent = msg; toast.classList.add('on'); clearTimeout(tt); tt = setTimeout(function () { toast.classList.remove('on'); }, 2600); }
+  var st = $('st-png');
+  if (st && window.MutationObserver) new MutationObserver(function () { say(st.textContent); }).observe(st, { childList: true, characterData: true, subtree: true });
+
+  /* Mobile dock and keyboard shortcuts both reuse the tool's own buttons */
+  var dock = document.createElement('div');
+  dock.className = 'dock';
+  dock.innerHTML = '<button class="btn" id="dockCopy" type="button">Copy image</button><button class="btn primary" id="dockPng" type="button">Download PNG</button>';
+  document.body.appendChild(dock);
+  $('dockCopy').addEventListener('click', function () { $('btnCopy').click(); });
+  $('dockPng').addEventListener('click', function () { $('btnPng').click(); });
+  if ($('btnPng')) $('btnPng').title = 'Download PNG (Ctrl+S)';
+  if ($('btnCopy')) $('btnCopy').title = 'Copy image (Ctrl+Enter)';
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    if (e.key === 's' || e.key === 'S') { e.preventDefault(); $('btnPng').click(); }
+    else if (e.key === 'Enter') { e.preventDefault(); $('btnCopy').click(); }
+  });
+})();
+</script>
 </body></html>
