@@ -655,7 +655,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     if (/^\[\s*character kill\s*\]/i.test(t)) return 'kill';
     if (/^weather forecast\s*:/i.test(t) || /^temperature\s*:/i.test(t) || /^wind\s*:/i.test(t)) return 'weather';
     if (/^\(\s*iFruit[^)]*\)\s*Message\s+(sent to|from)\b/i.test(t)) return 'sms';
-    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^Incoming call\b/i.test(t)) return 'pinfo';
+    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^Your call has been (picked up|hung up)\b/i.test(t) || /^Incoming call\b/i.test(t)) return 'pinfo';
     if (/^[\[(]\s*intercom\b/i.test(t)) return 'inter';
     if (/^[\[(]\s*(microphone|mic)\b/i.test(t)) return 'mic';
     if (/^\*\*\s*\[\s*(DEPARTMENT|DEPT)/i.test(t)) return 'dept';
