@@ -458,11 +458,11 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     { id: 'whisper', label: 'Whisper',           hint: 'Tobias Wren whispers: …',    color: '#EDA841' },
     { id: 'lowto',   label: 'Low voice to you',  hint: '[!] Tobias Wren says [low] (to You): …', color: '#A6ACAF' },
     { id: 'carw',    label: 'Whisper (Car)',     hint: 'Tobias Wren whispers (car): …', color: '#FFFF00' },
-    { id: 'phone',   label: 'Phone call',        hint: 'Tobias Wren says (phone): …', color: '#FFFF00' },
+    { id: 'phone',   label: 'Phone call',        hint: 'Tobias Wren says (phone): …', color: '#FFFF00', mine: '#FFFFFF' },
     { id: 'me',      label: '/me',               hint: '* Tobias Wren takes out a gun.', color: '#C2A2DA' },
     { id: 'do',      label: '/do',               hint: '* A gun is visible. (( Tobias Wren ))', color: '#C2A2DA' },
     { id: 'sms',     label: 'Phone messages',    hint: '(iFruit 15) Message sent to … / from …', color: '#FFA500' },
-    { id: 'pinfo',   label: 'Phone call info',   hint: '(iFruit 15) Incoming call from … / You have picked up the call.', color: '#FFFF00' },
+    { id: 'pinfo',   label: 'Phone call info',   hint: '(iFruit 15) Incoming call from … / You have picked up the call.', color: '#FFFFFF' },
     { id: 'sys',     label: 'Phone and system',  hint: '(iFruit 15) Incoming call from …', color: '#FFFFFF' },
     { id: 'gps',     label: 'GPS, items, offers', hint: 'Waypoint set on the GPS by …', color: '#32CD32' },
     { id: 'drug',    label: 'Drugs',             hint: 'You\'ve just taken Marijuana! …', color: '#FFFFFF' },
@@ -489,7 +489,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   var DIST = [1, 0.78, 0.58, 0.4];
   var DIST_LABEL = ['Close', 'Medium', 'Far', 'Very far'];
   var KEY = 'chatlog-magician-v3';
-  var PAL = 6; /* bump when the default colors change, so saved old colors are not kept */
+  var PAL = 8; /* bump when the default colors change, so saved old colors are not kept */
   var DEF_OPTS = { ts: true, codes: true, under: true, bold: false, bars: true, bg: 'clear', bgColor: '#000000', barColor: '#000000', size: 13.33, lh: 0, outline: -1, width: 784, font: 'arial', me: 'Tobias_Wren', junk: true, junkWords: '' };
   var PNG_SCALE = 1; /* 1:1, so the PNG is exactly as wide as the Width you set */
   var FONTS = [
@@ -655,7 +655,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     if (/^\[\s*character kill\s*\]/i.test(t)) return 'kill';
     if (/^weather forecast\s*:/i.test(t) || /^temperature\s*:/i.test(t) || /^wind\s*:/i.test(t)) return 'weather';
     if (/^\(\s*iFruit[^)]*\)\s*Message\s+(sent to|from)\b/i.test(t)) return 'sms';
-    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^Incoming call\b/i.test(t)) return 'pinfo';
+    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^Incoming call\b/i.test(t) || /^(Your|The) call\b.*\b(picked up|answered|hung up|ended|declined|rejected)\b/i.test(t)) return 'pinfo';
     if (/^[\[(]\s*intercom\b/i.test(t)) return 'inter';
     if (/^[\[(]\s*(microphone|mic)\b/i.test(t)) return 'mic';
     if (/^\*\*\s*\[\s*(DEPARTMENT|DEPT)/i.test(t)) return 'dept';
@@ -667,6 +667,8 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     if (/^You've just taken\b/i.test(t) || /^You.ve just taken\b/i.test(t)) return 'drug';
     if (/^\|-+\s.*\s-+\|$/.test(t)) return 'gps';
     if (/^\(Index:\s*\d+\)/i.test(t)) return 'sys';
+    if (/^Refilling\b.*\bgallons?\b/i.test(t) || /^\S.{1,60}?\spaid you\b/i.test(t)) return 'gps';
+    if (/^Info\s*:\s/.test(t) || /^You collected\b.*\$/i.test(t)) return 'tag';
     if (/^(Waypoint set\b|You received\b|You paid\b|You gave\b)/i.test(t) || /\bhas shown you (their|his|her)\b/i.test(t)) return 'gps';
     if (/^You have been recruited\b/i.test(t) ||
         /^Your rank has been\b/i.test(t) || /^You.ve received\b/i.test(t)) return 'sys';
@@ -786,6 +788,23 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       }
       if (last < text.length) out.push({ t: text.slice(last), c: white });
       return out;
+    }
+    if (type === 'tag' && (/^Info\s*:\s/.test(text) || /^You collected\b/i.test(text))) {
+      var hd = text.match(/^Info\s*:/), pre = hd ? hd[0] : '', body = text.slice(pre.length);
+      var spans3 = [], z, vre = /(reader of )(.+?)( for an amount)/i;
+      if ((z = vre.exec(body))) spans3.push([z.index + z[1].length, z.index + z[1].length + z[2].length, '#FFFF00']);
+      var mre = /\$[\d,.]*\d|\$/g;
+      while ((z = mre.exec(body))) spans3.push([z.index, z.index + z[0].length, state.colors.gps]);
+      spans3.sort(function (a, b) { return a[0] - b[0]; });
+      var o3 = pre ? [{ t: pre, c: sh('#FFA800') }] : [], p3 = 0;
+      spans3.forEach(function (h) {
+        if (h[0] < p3) return;
+        if (h[0] > p3) o3.push({ t: body.slice(p3, h[0]), c: shown });
+        o3.push({ t: body.slice(h[0], h[1]), c: sh(h[2]) });
+        p3 = h[1];
+      });
+      if (p3 < body.length) o3.push({ t: body.slice(p3), c: shown });
+      return o3;
     }
     if (type === 'tag' && (m = text.match(/^(\[[^\]]+\])(.*)$/))) {
       var tc = /^\[\s*(GPS|SUCCESS)\s*\]$/i.test(m[1]) ? state.colors.gps : '#FFA800';
