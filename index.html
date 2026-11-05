@@ -221,6 +221,8 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
 .status { font-size: 12.5px; color: var(--muted); min-height: 1.4em; }
 
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.madewith { text-align: center; margin: 22px 0 6px; font: 500 12px/1 var(--f-body); letter-spacing: .04em; color: var(--muted); }
+.madewith span { color: #FF5E8A; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
@@ -443,6 +445,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       </section>
     </div>
   </div>
+  <footer class="madewith">Made with Claude <span aria-label="love">&#10084;</span></footer>
 </div>
 
 <script>
@@ -655,7 +658,8 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     if (/^\[\s*character kill\s*\]/i.test(t)) return 'kill';
     if (/^weather forecast\s*:/i.test(t) || /^temperature\s*:/i.test(t) || /^wind\s*:/i.test(t)) return 'weather';
     if (/^\(\s*iFruit[^)]*\)\s*Message\s+(sent to|from)\b/i.test(t)) return 'sms';
-    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^Incoming call\b/i.test(t) || /^(Your|The) call\b.*\b(picked up|answered|hung up|ended|declined|rejected)\b/i.test(t)) return 'pinfo';
+    if (/^(Your call has been|You have) (picked up|answered)\b/i.test(t)) return 'phone';
+    if (/^\(\s*iFruit/i.test(t) || /^You have (picked up|hung up)\b/i.test(t) || /^Incoming call\b/i.test(t) || /^(Your|The) call\b.*\b(picked up|answered|hung up|ended|declined|rejected)\b/i.test(t) || /^The other party has\b/i.test(t)) return 'pinfo';
     if (/^[\[(]\s*intercom\b/i.test(t)) return 'inter';
     if (/^[\[(]\s*(microphone|mic)\b/i.test(t)) return 'mic';
     if (/^\*\*\s*\[\s*(DEPARTMENT|DEPT)/i.test(t)) return 'dept';
