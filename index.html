@@ -655,6 +655,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     if (/^You unlocked\b/i.test(t)) return 'success';
     if (/^[\[(]\s*(PM|SMS|text message)\b/i.test(t)) return 'phone';
     if (/^\[!\]\s.*\[\s*low(?:er)?\s*\]/i.test(t)) return 'lowto';
+    if (/^\[!\]\s.*\bsays?\b/i.test(t)) return 'say';
     if (/^\[\s*character kill\s*\]/i.test(t)) return 'kill';
     if (/^weather forecast\s*:/i.test(t) || /^temperature\s*:/i.test(t) || /^wind\s*:/i.test(t)) return 'weather';
     if (/^\(\s*iFruit[^)]*\)\s*Message\s+(sent to|from)\b/i.test(t)) return 'sms';
@@ -778,6 +779,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     var m;
     if (type === 'success' && (m = text.match(/^(\[\s*success\s*\])(.*)$/i))) return [{ t: m[1], c: shown }, { t: m[2], c: sh('#FFFFFF') }];
     if (type === 'kill' && (m = text.match(/^(\[[^\]]+\])(.*)$/))) return [{ t: m[1], c: sh(state.colors.info) }, { t: m[2], c: shown }];
+    if (type === 'say' && (m = text.match(/^(\[!\])(.*)$/))) return [{ t: m[1], c: sh('#F000B8') }, { t: m[2], c: shown }];
     if (type === 'lowto' && (m = text.match(/^(\[!\])(.*)$/))) return [{ t: m[1], c: sh('#F000B8') }, { t: m[2], c: shown }];
     if (type === 'gps' && (m = text.match(/^(.*?\bhas shown you (?:their|his|her)\s+)(.+?)(\.?)$/i))) {
       return [{ t: m[1], c: shown }, { t: m[2], c: sh('#FFFFFF') }].concat(m[3] ? [{ t: m[3], c: shown }] : []);
