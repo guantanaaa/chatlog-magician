@@ -493,7 +493,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   var DIST_LABEL = ['Close', 'Medium', 'Far', 'Very far'];
   var KEY = 'chatlog-magician-v3';
   var PAL = 8; /* bump when the default colors change, so saved old colors are not kept */
-  var DEF_OPTS = { ts: true, codes: true, under: true, bold: false, bars: true, bg: 'clear', bgColor: '#000000', barColor: '#000000', size: 13.33, lh: 0, outline: -1, width: 784, font: 'arial', me: 'Tobias_Wren', junk: true, junkWords: '' };
+  var DEF_OPTS = { ts: true, codes: true, under: true, bold: false, bars: true, bg: 'clear', bgColor: '#000000', barColor: '#000000', size: 13.33, lh: 17, outline: 1, width: 784, font: 'arial', me: 'Tobias_Wren', junk: true, junkWords: '' };
   var PNG_SCALE = 1; /* 1:1, so the PNG is exactly as wide as the Width you set */
   var FONTS = [
     { id: 'arial',      label: 'Arial (in-game)', css: 'Arial, Helvetica, "Liberation Sans", sans-serif', web: false },
@@ -593,6 +593,8 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       if (s.opts) Object.keys(DEF_OPTS).forEach(function (k) {
         if (typeof s.opts[k] === typeof DEF_OPTS[k]) state.opts[k] = s.opts[k];
       });
+      if (!(state.opts.lh > 0)) state.opts.lh = DEF_OPTS.lh;
+      if (!(state.opts.outline >= 0)) state.opts.outline = DEF_OPTS.outline;
       if (state.opts.bg === 'full') { state.opts.bg = 'clear'; state.opts.bars = false; }
       if (['clear', 'color'].indexOf(state.opts.bg) < 0) state.opts.bg = 'color';
       if (!isHex(state.opts.bgColor)) state.opts.bgColor = DEF_OPTS.bgColor;
@@ -643,7 +645,7 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
   function isJunk(t) {
     if (!state.opts.junk && !state.opts.junkWords) return false;
     if (state.opts.junk && (/^Price per kWh\b/i.test(t) || /^Use \/recharge\b/i.test(t) || /\bPress\s+[A-Z]\s+to\b/.test(t) ||
-        /^\[\s*info\s*\].*\buse\s+[\/.]\w+/i.test(t))) return true;
+        (/^\[\s*info\s*\].*\buse\s+[\/.]\w+/i.test(t) && !/\/endshift|started your shift/i.test(t)))) return true;
     var w = String(state.opts.junkWords || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean), lc = t.toLowerCase();
     for (var i = 0; i < w.length; i++) if (lc.indexOf(w[i]) >= 0) return true;
     return false;
@@ -779,6 +781,23 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
     var m;
     if (type === 'success' && (m = text.match(/^(\[\s*success\s*\])(.*)$/i))) return [{ t: m[1], c: shown }, { t: m[2], c: sh('#FFFFFF') }];
     if (type === 'kill' && (m = text.match(/^(\[[^\]]+\])(.*)$/))) return [{ t: m[1], c: sh(state.colors.info) }, { t: m[2], c: shown }];
+    if (type === 'info' && (m = text.match(/^(\[[^\]]+\])(.*)$/))) {
+      var ib = m[2], sp4 = [], w4;
+      if ((w4 = /(shift at )(.+?)( \()(#\d+)(\))/i.exec(ib))) {
+        var b0 = w4.index + w4[1].length;
+        sp4.push([b0, b0 + w4[2].length, shown]);
+        var n0 = b0 + w4[2].length + w4[3].length;
+        sp4.push([n0, n0 + w4[4].length, '#FFFF00']);
+      }
+      var o4 = [{ t: m[1], c: shown }], q4 = 0, white4 = sh('#FFFFFF');
+      sp4.forEach(function (h) {
+        if (h[0] > q4) o4.push({ t: ib.slice(q4, h[0]), c: white4 });
+        o4.push({ t: ib.slice(h[0], h[1]), c: sh(h[2] === shown ? state.colors.info : h[2]) });
+        q4 = h[1];
+      });
+      if (q4 < ib.length) o4.push({ t: ib.slice(q4), c: white4 });
+      return o4;
+    }
     if (type === 'say' && (m = text.match(/^(\[!\])(.*)$/))) return [{ t: m[1], c: sh('#F000B8') }, { t: m[2], c: shown }];
     if (type === 'lowto' && (m = text.match(/^(\[!\])(.*)$/))) return [{ t: m[1], c: sh('#F000B8') }, { t: m[2], c: shown }];
     if (type === 'gps' && (m = text.match(/^(.*?\bhas shown you (?:their|his|her)\s+)(.+?)(\.?)$/i))) {
@@ -1263,11 +1282,17 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       r.runs[r.runs.length - 1].t = r.runs[r.runs.length - 1].t.replace(/\s+$/, '');
       var total = 0;
       r.runs.forEach(function (run) { total += ctx.measureText(run.t).width; });
+      r._y = y; r._rh = rh;
       if (barsOn()) {
         ctx.fillStyle = barFill();
         /* Full row height: in the game the bars of consecutive lines touch, with no gap between them. */
         ctx.fillRect(pad, y, total + 2 * px, rh);
       }
+    });
+    /* Text goes on after every bar, so a bar never covers the outline of the line above it. */
+    rows.forEach(function (r) {
+      if (!r.runs.length) return;
+      var y = r._y, rh = r._rh;
       var x = pad + px;
       r.runs.forEach(function (run) {
         if (run.r) {
@@ -1576,7 +1601,12 @@ textarea { width: 100%; display: block; border: 1px solid var(--line); border-ra
       el.addEventListener('input', function () { if (el.value !== '' && el.checkValidity()) { apply(Number(el.value)); save(); render(); } else if (el.value === '' && el.placeholder === 'auto') { apply(null); save(); render(); } });
       el.addEventListener('change', function () { syncControls(); });
     }
-    numOpt('o-size', function (v) { if (v) { state.opts.size = Math.round(v * 100) / 100; ensureFont(); } });
+    numOpt('o-size', function (v) { if (v) {
+      /* Fixed line height follows the size while it is still the standard 1.3 pitch, so lines never overlap. */
+      var wasStd = Math.round(state.opts.size * 1.3) === state.opts.lh;
+      state.opts.size = Math.round(v * 100) / 100; ensureFont();
+      if (wasStd) { state.opts.lh = Math.round(state.opts.size * 1.3); $('o-lh').value = String(state.opts.lh); }
+    } });
     numOpt('o-lh', function (v) { state.opts.lh = v ? v : 0; });
     numOpt('o-ol', function (v) { state.opts.outline = v === null ? -1 : v; });
     FONTS.forEach(function (f) { var o = document.createElement('option'); o.value = f.id; o.textContent = f.label; $('o-font').appendChild(o); });
